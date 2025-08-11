@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>متابعة التقدّم الدراسي</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Quill.js CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script> tailwind.config = { darkMode:'class' } </script>
+  <style>
+    .card{ box-shadow:0 6px 18px rgba(0,0,0,.06) }
+    .btn{ padding:.5rem .75rem;border-radius:.375rem;font-size:.9rem;transition:transform .06s ease, background-color .15s ease, opacity .15s ease}
+    .btn:active{ transform:scale(.97) }
+    .btn-ghost{ background:#e5e7eb } .btn-ghost:hover{ background:#d1d5db }
+    .btn-danger{ background:#ef4444;color:#fff } .btn-danger:hover{ background:#dc2626 }
+    .btn-primary{ background:#3b82f6;color:#fff } .btn-primary:hover{ background:#2563eb }
+    .btn-accent{ background:#fbbf24 } .btn-accent:hover{ background:#f59e0b }
+    .btn-green{ background:#22c55e;color:#fff } .btn-green:hover{ background:#16a34a }
+    .badge{ display:inline-block;font-size:.75rem;border-radius:.375rem;padding:.1rem .5rem }
+    .badge-gray{ background:#f3f4f6;color:#374151 }
+    .badge-amber{ background:#fef3c7;color:#92400e }
+    .badge-green{ background:#dcfce7;color:#166534 }
+    .dark .btn-ghost{ background:#1f2937 } .dark .btn-ghost:hover{ background:#374151 }
+    .dark .badge-gray{ background:#111827;color:#e5e7eb }
+    .dark .badge-amber{ background:#3b2e12;color:#fcd34d }
+    .dark .badge-green{ background:#052e16;color:#86efac }
+    .dark .card{ box-shadow:0 6px 18px rgba(0,0,0,.35) }
+    .index-bubble{ min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#e5e7eb;color:#111827;font-weight:700 }
+    .dark .index-bubble{ background:#1f2937;color:#e5e7eb }
+    #toast{ position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:50;display:none }
+    .progress-wrap{ position:relative } .progress-text{ position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#111827 }
+    .dark .progress-text{ color:#e5e7eb }
+    .drag-handle{ cursor:grab } .drag-handle.disabled{ opacity:.35; cursor:not-allowed }
+    .drag-handle:active{ cursor:grabbing }
+    .editable{ outline:none;border-bottom:1px dashed transparent } .editable:focus{ border-bottom-color:#60a5fa }
+    .overdue{ outline:2px solid #f97316; outline-offset:2px } .stale{ outline:2px solid #ef4444; outline-offset:2px }
+    .tag{ padding:.1rem .45rem;border-radius:.4rem;font-size:.75rem; margin-left:.25rem; display:inline-flex; align-items:center; gap:.25rem }
+    .tag-btn{ border:1px solid transparent; cursor:pointer } .tag-btn:active{ transform:scale(.96) }
+    .tag-dot{ width:8px;height:8px;border-radius:9999px;display:inline-block }
+    .pill{ padding:.15rem .55rem;border-radius:9999px;border:1px dashed #cbd5e1;font-size:.75rem }
+    .dim{ opacity:.6 }
+    .placeholder{ border:2px dashed #60a5fa; border-radius:.5rem; background:transparent; margin:.25rem 0 }
+    canvas{ touch-action:none; display:block; margin:auto }
+    .topic-item,.subject-item, .subtopic-item{ list-style:none }
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; display:none; }
+    .modal-content{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:100; }
+    #calendarGrid > div { min-height: 100px; }
+    #calendarGrid .today { background-color: #bfdbfe; }
+    .dark #calendarGrid .today { background-color: #1e3a8a; }
+    /* Quill Editor Styles */
+    .ql-toolbar { border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem; border-color: #d1d5db !important; }
+    .ql-container { border-bottom-left-radius: 0.375rem; border-bottom-right-radius: 0.375rem; border-color: #d1d5db !important; min-height: 80px; font-size: 16px; }
+    .dark .ql-toolbar { border-color: #4b5563 !important; }
+    .dark .ql-container { border-color: #4b5563 !important; }
+    .dark .ql-editor { color: #e5e7eb; }
+    .dark .ql-snow .ql-stroke { stroke: #9ca3af; }
+    .dark .ql-snow .ql-picker-label { color: #9ca3af; }
+    .dark .ql-snow .ql-active .ql-stroke { stroke: #3b82f6; }
+    .dark .ql-snow .ql-active .ql-fill { fill: #3b82f6; }
+    /* Quill Font Size Customization */
+    .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item::before { content: '16px'; }
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: '12px'; font-size: 12px; }
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: '14px'; font-size: 14px; }
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="false"]::before { content: '16px'; font-size: 16px; }
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: '18px'; font-size: 18px; }
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before { content: '20px'; font-size: 20px; }
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { content: '24px'; font-size: 24px; }
+    /* Achievement Card Styles */
+    .achievement-card { transition: all 0.3s ease; }
+    .achievement-card.locked { filter: grayscale(1) opacity(0.6); }
+    .achievement-card.unlocked { border-color: #fbbf24; }
+    /* Global Search */
+    #globalSearchInput { transition: width 0.3s ease-in-out; }
+    #globalSearchInput:focus { width: 20rem; }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-100 min-h-screen text-[15px]">
+  <header class="w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+      <h1 class="text-xl font-bold">📚 متابعة التقدّم الدراسي</h1>
+      <div class="ml-auto flex items-center gap-3">
+        <!-- Global Search -->
+        <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input id="globalSearchInput" type="search" placeholder="بحث شامل..." class="w-48 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded-full pl-9">
+            <div id="globalSearchResults" class="absolute hidden w-80 max-h-96 overflow-y-auto top-full mt-2 right-0 card bg-white dark:bg-gray-800 p-2 rounded shadow-lg text-right">
+                <!-- Search results will appear here -->
+            </div>
+        </div>
+        <div id="pointsCounter" class="flex items-center gap-1 font-bold text-amber-500">
+            <span>0</span> <span>نقطة</span> ✨
+        </div>
+        <button id="viewTrackerBtn" class="btn btn-primary">المُتابِع</button>
+        <button id="viewChartsBtn" class="btn btn-ghost">📊 الرسوم البيانية</button>
+        <button id="viewGoalsBtn" class="btn btn-ghost">🏆 الأهداف</button>
+        <button id="viewAchievementsBtn" class="btn btn-ghost">🎖️ الإنجازات</button>
+        <button id="viewCalendarBtn" class="btn btn-ghost">📅 التقويم</button>
+        <button id="viewDashboardBtn" class="btn btn-ghost">لوحة التحكم</button>
+        <button id="viewFollowUpBtn" class="btn btn-ghost">المتابعة</button>
+        <button id="settingsBtn" class="btn btn-ghost">⚙️ الإعدادات</button>
+        <button id="darkBtn" class="btn btn-ghost">🌙</button>
+        <button id="btnExport" class="btn btn-green">تصدير</button>
+        <label class="btn btn-accent cursor-pointer">استيراد
+          <input id="importInput" type="file" accept="application/json" class="hidden"/>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- TRACKER -->
+  <section id="tracker" class="max-w-6xl mx-auto px-4 mt-4">
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded"><div class="text-gray-500 dark:text-gray-400 text-sm">إجمالي المواضيع</div><div id="statTotal" class="text-2xl font-bold">0</div></div>
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded"><div class="text-gray-500 dark:text-gray-400 text-sm">المكتملة</div><div id="statDone" class="text-2xl font-bold">0</div></div>
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded"><div class="text-gray-500 dark:text-gray-400 text-sm">نسبة التقدّم</div><div id="statPct" class="text-2xl font-bold">0%</div></div>
+    </div>
+
+    <div class="card bg-white dark:bg-gray-800 p-4 rounded flex flex-wrap gap-2 items-center mt-4">
+      <input id="subjectName" type="text" placeholder="اسم المادة" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded flex-1 min-w-[220px]">
+      <button id="addSubjectBtn" class="btn btn-primary">إضافة مادة</button>
+    </div>
+
+    <main id="subjectsContainer" class="mt-4"></main>
+  </section>
+  
+  <!-- REVAMPED: CHARTS PAGE -->
+  <section id="chartsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+      <h2 class="text-2xl font-bold mb-4 text-center">📊 تحليلات ورسوم بيانية</h2>
+      
+      <div class="grid gap-4 md:grid-cols-2 mb-4">
+          <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+              <h3 class="font-bold mb-2 text-center">توزيع المواضيع حسب المادة</h3>
+              <div class="max-w-sm mx-auto h-64"><canvas id="topicsBySubjectChart"></canvas></div>
+          </div>
+          <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+              <h3 class="font-bold mb-2 text-center">توزيع المواضيع حسب الحالة</h3>
+              <div class="max-w-sm mx-auto h-64"><canvas id="statusDistributionChart"></canvas></div>
+          </div>
+      </div>
+
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+          <h3 class="font-bold mb-2 text-center">المواضيع المكتملة يوميًا</h3>
+          <div class="relative h-80"><canvas id="completedByDayChart"></canvas></div>
+      </div>
+  </section>
+
+  <!-- GOALS PAGE -->
+  <section id="goalsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+    <div class="card bg-white dark:bg-gray-800 p-4 rounded mb-4">
+        <h2 class="text-xl font-bold mb-3">إضافة هدف جديد</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="goalDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300">وصف الهدف</label>
+                <input type="text" id="goalDescription" placeholder="مثال: إكمال 15 موضوع هذا الأسبوع" class="mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-full">
+            </div>
+            <div class="flex items-end gap-2">
+                <div>
+                    <label for="goalTarget" class="block text-sm font-medium text-gray-700 dark:text-gray-300">العدد المستهدف</label>
+                    <input type="number" id="goalTarget" min="1" value="10" class="mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-24">
+                </div>
+                <div>
+                    <label for="goalType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">نوع الهدف</label>
+                    <select id="goalType" class="mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">
+                        <option value="complete">إكمال مواضيع</option>
+                        <option value="review">مراجعة مواضيع</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="goalTimeframe" class="block text-sm font-medium text-gray-700 dark:text-gray-300">المدة</label>
+                    <select id="goalTimeframe" class="mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">
+                        <option value="week">هذا الأسبوع</option>
+                        <option value="month">هذا الشهر</option>
+                    </select>
+                </div>
+                <button id="addGoalBtn" class="btn btn-primary h-10">إضافة الهدف</button>
+            </div>
+        </div>
+    </div>
+    <div id="goalsContainer" class="space-y-4"></div>
+  </section>
+
+  <!-- ACHIEVEMENTS PAGE -->
+  <section id="achievementsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+          <h2 class="text-2xl font-bold mb-4 text-center">🏅 لوحة الإنجازات 🏅</h2>
+          <div id="achievementsContainer" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <!-- Achievement cards will be inserted here -->
+          </div>
+      </div>
+  </section>
+
+  <!-- CALENDAR PAGE -->
+  <section id="calendarPage" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+          <div class="flex justify-between items-center mb-4">
+              <button id="prevMonthBtn" class="btn btn-ghost">الشهر السابق</button>
+              <h2 id="calendarMonthYear" class="text-xl font-bold"></h2>
+              <button id="nextMonthBtn" class="btn btn-ghost">الشهر التالي</button>
+          </div>
+          <div class="grid grid-cols-7 gap-1 text-center font-semibold text-gray-600 dark:text-gray-300 mb-2">
+              <div>الأحد</div>
+              <div>الاثنين</div>
+              <div>الثلاثاء</div>
+              <div>الأربعاء</div>
+              <div>الخميس</div>
+              <div>الجمعة</div>
+              <div>السبت</div>
+          </div>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+      </div>
+      <div id="calendarDayModal" class="modal-backdrop">
+        <div class="modal-content card bg-white dark:bg-gray-800 p-5 rounded-lg w-full max-w-lg">
+            <div class="flex justify-between items-center mb-3">
+                <h3 id="modalDayTitle" class="text-lg font-bold"></h3>
+                <button id="closeCalendarModal" class="btn btn-ghost">✕</button>
+            </div>
+            <div id="modalDayContent" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="text-gray-500 dark:text-gray-400 text-sm">عدد المواد</div>
+        <div id="dbSubjects" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="text-gray-500 dark:text-gray-400 text-sm">عدد المواضيع</div>
+        <div id="dbTopics" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="text-gray-500 dark:text-gray-400 text-sm">نسبة التقدّم العامة</div>
+        <div id="dbPct" class="text-2xl font-bold">0%</div>
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2 mt-4">
+       <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold">Pomodoro</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">عمل/استراحة/جولات</span>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <label class="text-sm">عمل (د): <input id="pomoWork" type="number" min="1" value="25" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-20"></label>
+          <label class="text-sm">استراحة (د): <input id="pomoBreak" type="number" min="1" value="5" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-20"></label>
+          <label class="text-sm">جولات: <input id="pomoRounds" type="number" min="1" value="4" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-20"></label>
+        </div>
+        <div class="mb-2">
+            <label for="pomoTopicLink" class="text-sm font-medium text-gray-700 dark:text-gray-300">ربط الجلسة بموضوع</label>
+            <select id="pomoTopicLink" class="w-full mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded"></select>
+        </div>
+        <div id="pomoStatus" class="text-lg font-semibold mb-2">جاهز</div>
+        <div class="flex gap-2">
+          <button id="pomoStart" class="btn btn-primary">بدء</button>
+          <button id="pomoToggleBtn" class="btn btn-ghost">إيقاف مؤقت</button>
+          <button id="pomoReset" class="btn btn-danger">إعادة</button>
+        </div>
+      </div>
+
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold">ستوب وتش</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">Stopwatch</span>
+        </div>
+        <div class="mb-2">
+            <label for="swTopicLink" class="text-sm font-medium text-gray-700 dark:text-gray-300">ربط الجلسة بموضوع</label>
+            <select id="swTopicLink" class="w-full mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded"></select>
+        </div>
+        <div id="swDisplay" class="text-2xl font-mono font-bold mb-2">00:00:00</div>
+        <div class="flex gap-2">
+          <button id="swStart" class="btn btn-primary">بدء</button>
+          <button id="swToggleBtn" class="btn btn-ghost">إيقاف مؤقت</button>
+          <button id="swReset" class="btn btn-danger">إعادة</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2 mt-4">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold">عداد تنازلي</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">Countdown</span>
+        </div>
+        <div class="flex items-center gap-2 mb-2">
+          <label class="text-sm">د: <input id="cdMin" type="number" min="0" value="25" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-20"></label>
+          <label class="text-sm">ث: <input id="cdSec" type="number" min="0" max="59" value="0" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-20"></label>
+        </div>
+        <div id="cdDisplay" class="text-2xl font-mono font-bold mb-2">00:00:00</div>
+        <div class="flex gap-2">
+          <button id="cdStart" class="btn btn-primary">بدء</button>
+          <button id="cdToggleBtn" class="btn btn-ghost">إيقاف مؤقت</button>
+          <button id="cdReset" class="btn btn-danger">إعادة</button>
+        </div>
+      </div>
+
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold">عجلة الاختيار</h3>
+          <label class="text-sm flex items-center gap-1">
+            <input id="wheelExclude" type="checkbox"> استثناء الفائز تلقائيًا
+          </label>
+        </div>
+        <div class="grid md:grid-cols-2 gap-2">
+          <div>
+            <textarea id="wheelInput" rows="6" class="border dark:border-gray-700 bg-white dark:bg-gray-900 w-full p-2 rounded" placeholder="أدخل خيارًا في كل سطر"></textarea>
+            <div class="flex gap-2 mt-2">
+              <button id="wheelSpin" class="btn btn-primary">Spin</button>
+              <button id="wheelSave" class="btn btn-ghost">حفظ</button>
+            </div>
+            <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">الفائز: <span id="wheelWinner">—</span></div>
+          </div>
+          <div class="flex items-center justify-center">
+            <canvas id="wheelCanvas" width="320" height="320" class="rounded"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2 mt-4">
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold">مولِّد أرقام عشوائية</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">يدعم الأرقام السالبة وبدون تكرار</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <label class="text-sm">Min: <input id="rngMin" type="number" value="-10" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-24"></label>
+          <label class="text-sm">Max: <input id="rngMax" type="number" value="10" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded w-24"></label>
+          <label class="text-sm flex items-center gap-1"><input id="rngNoRepeat" type="checkbox"> بدون تكرار</label>
+          <button id="rngGo" class="btn btn-primary">توليد</button>
+          <button id="rngReset" class="btn btn-ghost">إعادة</button>
+        </div>
+        <div id="rngResult" class="text-xl font-mono mb-1">—</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">السجل: <span id="rngHistory">—</span></div>
+      </div>
+
+      <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+        <h3 class="font-bold mb-2">أكثر المواضيع المهملة</h3>
+        <ul id="neglectedList" class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOLLOW UP PAGE -->
+  <section id="followUpPage" class="max-w-6xl mx-auto px-4 mt-4 hidden">
+      <div class="grid md:grid-cols-2 gap-4">
+          <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+              <h2 class="text-xl font-bold mb-3">مواضيع مكتملة</h2>
+              <div id="completedTopicsList" class="space-y-2 max-h-[75vh] overflow-y-auto"></div>
+          </div>
+          <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+              <h2 class="text-xl font-bold mb-3">مواضيع غير مكتملة</h2>
+              <div id="incompleteTopicsList" class="space-y-2 max-h-[75vh] overflow-y-auto"></div>
+          </div>
+      </div>
+  </section>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-backdrop">
+      <div class="modal-content card bg-white dark:bg-gray-800 p-5 rounded-lg w-full max-w-md">
+          <h2 class="text-xl font-bold mb-4">الإعدادات</h2>
+          <div class="space-y-4">
+              <div>
+                  <label for="staleDaysInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تنبيه إهمال الموضوع بعد (أيام)</label>
+                  <input type="number" id="staleDaysInput" min="1" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-full">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">تمييز المواضيع التي لم تراجعها لهذه المدة باللون الأحمر.</p>
+              </div>
+              <div>
+                  <label for="dueGraceDaysInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">فترة السماح للاستحقاق (أيام)</label>
+                  <input type="number" id="dueGraceDaysInput" min="0" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-full">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">عدد الأيام قبل تمييز الموضوع كمستحق (برتقالي) بعد تاريخ المراجعة.</p>
+              </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+              <button id="settingsCancel" class="btn btn-ghost">إلغاء</button>
+              <button id="settingsSave" class="btn btn-primary">حفظ الإعدادات</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Edit Completion Date Modal -->
+  <div id="editCompletionDateModal" class="modal-backdrop">
+      <div class="modal-content card bg-white dark:bg-gray-800 p-5 rounded-lg w-full max-w-md">
+          <h2 class="text-xl font-bold mb-4">تعديل وقت الإكمال</h2>
+          <div class="space-y-4">
+              <div>
+                  <label for="completionDateInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">وقت الإكمال الجديد</label>
+                  <input type="datetime-local" id="completionDateInput" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-full">
+              </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+              <button id="completionDateCancel" class="btn btn-ghost">إلغاء</button>
+              <button id="completionDateSave" class="btn btn-primary">حفظ التغيير</button>
+          </div>
+      </div>
+  </div>
+  
+    <!-- Edit Review Date Modal -->
+    <div id="editReviewDateModal" class="modal-backdrop">
+        <div class="modal-content card bg-white dark:bg-gray-800 p-5 rounded-lg w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">تعديل تاريخ آخر مراجعة</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="reviewDateInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاريخ المراجعة الجديد</label>
+                    <input type="datetime-local" id="reviewDateInput" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded w-full">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button id="reviewDateCancel" class="btn btn-ghost">إلغاء</button>
+                <button id="reviewDateSave" class="btn btn-primary">حفظ التغيير</button>
+            </div>
+        </div>
+    </div>
+
+  <!-- Generic Confirmation Modal -->
+  <div id="confirmModal" class="modal-backdrop">
+    <div class="modal-content card bg-white dark:bg-gray-800 p-5 rounded-lg w-full max-w-sm text-center">
+        <h3 id="confirmModalTitle" class="text-lg font-bold mb-3">تأكيد الإجراء</h3>
+        <p id="confirmModalMessage" class="mb-5">هل أنت متأكد من أنك تريد المتابعة؟</p>
+        <div class="flex justify-center gap-3">
+            <button id="confirmModalCancel" class="btn btn-ghost w-24">إلغاء</button>
+            <button id="confirmModalConfirm" class="btn btn-danger w-24">تأكيد</button>
+        </div>
+    </div>
+  </div>
+
+
+  <div id="toast" class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-4 py-3 flex items-center gap-3">
+    <span id="toastMsg">تم الحذف.</span>
+    <button id="undoBtn" class="btn btn-ghost">تراجع</button>
+  </div>
+
+<!-- Quill.js JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<!-- Chart.js JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ===== Quill Font Size Customization =====
+const Quill = window.Quill;
+if (Quill) {
+    const Size = Quill.import('attributors/style/size');
+    Size.whitelist = ['12px', '14px', '18px', '20px', '24px'];
+    Quill.register(Size, true);
+}
+
+(function(){
+  // ===== Namespaced single state (shared) =====
+  const App = window.App || (window.App = {});
+  const State = App.State || (App.State = {
+    subjects: JSON.parse(localStorage.getItem('studyProgress')) || [],
+    goals: JSON.parse(localStorage.getItem('sp_goals')) || [],
+    activity: JSON.parse(localStorage.getItem('sp_activity')) || {},
+    tagColors: JSON.parse(localStorage.getItem('sp_tag_colors')) || {},
+    settings: JSON.parse(localStorage.getItem('sp_settings')) || { staleDays: 120, dueGraceDays: 120 },
+    points: JSON.parse(localStorage.getItem('sp_points')) || 0,
+    achievements: JSON.parse(localStorage.getItem('sp_achievements')) || [],
+    undoTimer: null, lastDelete: null,
+    quickView: localStorage.getItem('sp_quick')==='on',
+    currentView: localStorage.getItem('sp_view') || 'tracker',
+    editors: {} // To hold Quill instances
+  });
+  const SAVE = {
+    data(){ localStorage.setItem('studyProgress', JSON.stringify(State.subjects)); },
+    goals(){ localStorage.setItem('sp_goals', JSON.stringify(State.goals)); },
+    activity(){ localStorage.setItem('sp_activity', JSON.stringify(State.activity)); },
+    tags(){ localStorage.setItem('sp_tag_colors', JSON.stringify(State.tagColors)); },
+    settings(){ localStorage.setItem('sp_settings', JSON.stringify(State.settings)); },
+    points(){ localStorage.setItem('sp_points', JSON.stringify(State.points)); },
+    achievements(){ localStorage.setItem('sp_achievements', JSON.stringify(State.achievements)); }
+  };
+
+  // ===== Utilities (one copy only) =====
+  const U = App.Util || (App.Util = {
+    DIFFICULTY_INTERVAL: { 'Easy':7, 'Medium':3, 'Hard':1 },
+    SR_GROWTH: [1,2,4,7,14,30,60],
+    formatHMS(totalSeconds){ totalSeconds = Math.max(0, Math.floor(totalSeconds||0)); const h=Math.floor(totalSeconds/3600), m=Math.floor((totalSeconds%3600)/60), s=Math.floor(totalSeconds%60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; },
+    progressStyle(pct){ const hue = Math.max(0, Math.min(120, Math.round((pct/100)*120))); const startHue = Math.max(0, hue-20), endHue = Math.min(120, hue+20); return `width:${pct}%;background:linear-gradient(90deg,hsl(${startHue},90%,50%),hsl(${endHue},90%,40%));`; },
+    statusBadge(s){ if(s==='Completed') return '<span class="badge badge-green">Completed</span>'; if(s==='In Review') return '<span class="badge badge-amber">In Review</span>'; return '<span class="badge badge-gray">Not Started</span>'; },
+    dayKey(d=new Date()){ const dt=new Date(d.getTime()); dt.setHours(0,0,0,0); return dt.toISOString().slice(0,10); },
+    bumpToday(){ const k=U.dayKey(); State.activity[k]=(State.activity[k]||0)+1; SAVE.activity(); },
+    calcDue(topic){
+        const last = topic.lastReviewed ? new Date(topic.lastReviewed) : null;
+        if(!last) return {dueDate:null, overdue:false, stale:false};
+
+        const due = new Date(last.getTime());
+        
+        if (topic.useCustomSR && topic.customSRGrowth) {
+            const customFactors = topic.customSRGrowth.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
+            if (customFactors.length > 0) {
+                const lvl = topic.srLevel||0;
+                const daysToAdd = customFactors[Math.min(lvl, customFactors.length - 1)];
+                due.setDate(due.getDate() + daysToAdd);
+            }
+        } else {
+            const base = U.DIFFICULTY_INTERVAL[topic.difficulty||'Medium']||3;
+            const lvl = topic.srLevel||0;
+            const mul = U.SR_GROWTH[Math.min(lvl, U.SR_GROWTH.length-1)];
+            due.setDate(due.getDate() + (base * mul));
+        }
+        
+        const now = new Date();
+        const staleDays = State.settings.staleDays || 120;
+        const graceDays = State.settings.dueGraceDays || 0;
+        const graceMs = graceDays * 86400000;
+
+        return {
+            dueDate: due,
+            overdue: now.getTime() > (due.getTime() + graceMs),
+            stale: (now - last) >= (staleDays * 86400000)
+        };
+    },
+    humanize(ms){ if(ms < 0) ms = 0; const d=Math.floor(ms/86400000), h=Math.floor((ms%86400000)/3600000), m=Math.floor((ms%3600000)/60000); return (d?d+'ي ':'')+(h?h+'س ':'')+(m?m+'د':''); },
+    tagColor(name){ return State.tagColors[name] || ({'حفظ':'#0ea5e9','مسائل':'#f97316','عملي':'#22c55e','محاضرة':'#a855f7','أخرى':'#64748b'}[name]||'#64748b'); },
+    renderTags(tags){ tags = tags||[]; if(tags.length===0) return '<div class="text-xs text-gray-500 dark:text-gray-400">لا وسوم</div>'; return `<div class="flex flex-wrap gap-1">${tags.map(t=>`<span class="tag" style="border:1px solid ${U.tagColor(t)};color:${U.tagColor(t)}"><span class="tag-dot" style="background:${U.tagColor(t)}"></span>${t}</span>`).join('')}</div>`; },
+    toast(msg, type='info'){ const el=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; if(type === 'achievement') { el.classList.add('border-amber-400', 'dark:border-amber-400', 'text-amber-600', 'dark:text-amber-300'); } else { el.classList.remove('border-amber-400', 'dark:border-amber-400', 'text-amber-600', 'dark:text-amber-300'); } el.style.display='flex'; clearTimeout(State.undoTimer); State.undoTimer=setTimeout(()=>{ el.style.display='none'; State.lastDelete=null; },5000); },
+    applyDark(){ const pref = localStorage.getItem('sp_dark') || 'off'; document.documentElement.classList.toggle('dark', pref==='on'); document.getElementById('darkBtn').textContent = pref==='on' ? '☀️' : '🌙'; },
+    toggleDark(){ const pref = localStorage.getItem('sp_dark') || 'off'; localStorage.setItem('sp_dark', pref==='on'?'off':'on'); U.applyDark(); App.Charts.render(); }, // Re-render charts on theme change
+    updatePoints(value) { State.points = Math.max(0, (State.points || 0) + value); SAVE.points(); U.renderPoints(); App.Achievements.check(); },
+    renderPoints() { const el = document.getElementById('pointsCounter'); if (el) el.innerHTML = `<span>${State.points}</span> <span>نقطة</span> ✨`; },
+    confirmAction(message, onConfirm) {
+        const modal = document.getElementById('confirmModal');
+        const msgEl = document.getElementById('confirmModalMessage');
+        const confirmBtn = document.getElementById('confirmModalConfirm');
+        const cancelBtn = document.getElementById('confirmModalCancel');
+
+        msgEl.textContent = message;
+        modal.style.display = 'block';
+
+        const confirmHandler = () => {
+            onConfirm();
+            hide();
+        };
+
+        const hide = () => {
+            modal.style.display = 'none';
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+        };
+        
+        confirmBtn.onclick = confirmHandler;
+        cancelBtn.onclick = hide;
+    }
+  });
+
+  // ===== Achievements Module =====
+  App.Achievements = App.Achievements || (function(){
+    const achievementList = [
+        { id: 'complete_1', icon: '🚀', title: 'البداية القوية', desc: 'أكمل موضوعك الأول.', condition: (stats) => stats.completedTopics >= 1 },
+        { id: 'complete_5', icon: '🔥', title: 'على الطريق الصحيح', desc: 'أكمل 5 مواضيع.', condition: (stats) => stats.completedTopics >= 5 },
+        { id: 'complete_10', icon: '🎯', title: 'منطلق!', desc: 'أكمل 10 مواضيع.', condition: (stats) => stats.completedTopics >= 10 },
+        { id: 'complete_25', icon: '🏆', title: 'محترف', desc: 'أكمل 25 موضوعًا.', condition: (stats) => stats.completedTopics >= 25 },
+        { id: 'complete_45', icon: '🧑‍🎓', title: 'خبير المواضيع', desc: 'أكمل 45 موضوعًا.', condition: (stats) => stats.completedTopics >= 45 },
+        { id: 'complete_75', icon: '👑', title: 'أستاذ', desc: 'أكمل 75 موضوعًا.', condition: (stats) => stats.completedTopics >= 75 },
+        { id: 'points_100', icon: '💰', title: 'جامع النقاط', desc: 'اجمع 100 نقطة.', condition: (stats) => stats.points >= 100 },
+        { id: 'points_500', icon: '💎', title: 'كنز النقاط', desc: 'اجمع 500 نقطة.', condition: (stats) => stats.points >= 500 },
+        { id: 'subject_1', icon: '📚', title: 'المادة الأولى', desc: 'أكمل جميع مواضيع مادة دراسية واحدة.', condition: (stats) => stats.completedSubjects >= 1 },
+        { id: 'subject_3', icon: '🗺️', title: 'متعدد المواهب', desc: 'أكمل جميع مواضيع 3 مواد دراسية.', condition: (stats) => stats.completedSubjects >= 3 },
+        { id: 'review_10', icon: '🧐', title: 'المراجع الدؤوب', desc: 'قم بمراجعة المواضيع 10 مرات.', condition: (stats) => stats.totalReviews >= 10 },
+        { id: 'review_50', icon: '👑', title: 'ملك المراجعة', desc: 'قم بمراجعة المواضيع 50 مرة.', condition: (stats) => stats.totalReviews >= 50 },
+        { id: 'goal_create_1', icon: '✍️', title: 'المُخطِّط', desc: 'أنشئ هدفك الأول.', condition: (stats) => stats.createdGoals >= 1 },
+        { id: 'goal_complete_1', icon: '🎉', title: 'منجز الأهداف', desc: 'أكمل هدفك الأول بنجاح.', condition: (stats) => stats.completedGoals >= 1 },
+        { id: 'goal_complete_3', icon: '🌟', title: 'استراتيجي', desc: 'أكمل 3 أهداف مختلفة.', condition: (stats) => stats.completedGoals >= 3 },
+        { id: 'consistency_7', icon: '🗓️', title: 'مثابرة أسبوعية', desc: 'ذاكر في 7 أيام مختلفة.', condition: (stats) => stats.uniqueStudyDays >= 7 },
+        { id: 'notes_10', icon: '✍️', title: 'المدوّن الخبير', desc: 'اكتب ملاحظات لـ 10 مواضيع مختلفة.', condition: (stats) => stats.totalNotes >= 10 },
+    ];
+
+    function getStats() {
+        const allTopics = State.subjects.flatMap(s => s.topics || []);
+        const completedSubjects = State.subjects.filter(s => (s.topics || []).length > 0 && (s.topics || []).every(t => t.status === 'Completed')).length;
+        
+        const createdGoals = State.goals.length;
+        const completedGoals = State.goals.filter(goal => {
+            const currentProgress = App.Goals ? App.Goals.calculateProgress(goal) : 0;
+            return currentProgress >= goal.target;
+        }).length;
+
+        const uniqueStudyDays = Object.keys(State.activity || {}).length;
+        const totalNotes = allTopics.filter(t => t.notes && t.notes.length > 20).length; // Count non-trivial notes
+
+        return {
+            completedTopics: allTopics.filter(t => t.status === 'Completed').length,
+            totalReviews: allTopics.reduce((acc, t) => acc + (t.reviews || 0), 0),
+            points: State.points,
+            completedSubjects: completedSubjects,
+            createdGoals: createdGoals,
+            completedGoals: completedGoals,
+            uniqueStudyDays: uniqueStudyDays,
+            totalNotes: totalNotes
+        };
+    }
+
+    function check() {
+        // Defer check slightly to ensure other modules like App.Goals are initialized
+        setTimeout(() => {
+            const stats = getStats();
+            achievementList.forEach(ach => {
+                if (!State.achievements.includes(ach.id) && ach.condition(stats)) {
+                    State.achievements.push(ach.id);
+                    SAVE.achievements();
+                    U.toast(`إنجاز جديد: ${ach.title}`, 'achievement');
+                    if (State.currentView === 'achievementsPage') render();
+                }
+            });
+        }, 100);
+    }
+
+    function render() {
+        if (State.currentView !== 'achievementsPage') return;
+        const container = document.getElementById('achievementsContainer');
+        if (!container) return;
+
+        container.innerHTML = achievementList.map(ach => {
+            const isUnlocked = State.achievements.includes(ach.id);
+            const cardClass = isUnlocked ? 'unlocked' : 'locked';
+            return `
+                <div class="achievement-card ${cardClass} card bg-white dark:bg-gray-800 p-4 rounded border-2 border-transparent text-center">
+                    <div class="text-5xl mb-2">${ach.icon}</div>
+                    <h3 class="font-bold text-lg">${ach.title}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">${ach.desc}</p>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    return { render, check };
+  })();
+
+  // ===== View Manager =====
+  App.Views = App.Views || (function(){
+    function switchView(viewName) {
+        State.currentView = viewName;
+        localStorage.setItem('sp_view', viewName);
+        render();
+    }
+
+    function render() {
+        const views = ['tracker', 'dashboard', 'followUpPage', 'goalsPage', 'calendarPage', 'achievementsPage', 'chartsPage'];
+        const btns = { tracker: 'viewTrackerBtn', dashboard: 'viewDashboardBtn', followUpPage: 'viewFollowUpBtn', goalsPage: 'viewGoalsBtn', calendarPage: 'viewCalendarBtn', achievementsPage: 'viewAchievementsBtn', chartsPage: 'viewChartsBtn' };
+        
+        views.forEach(v => {
+            const el = document.getElementById(v);
+            if(el) el.classList.toggle('hidden', State.currentView !== v);
+        });
+
+        Object.values(btns).forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if(btn) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-ghost');
+            }
+        });
+        
+        const activeBtn = document.getElementById(btns[State.currentView]);
+        if(activeBtn) {
+            activeBtn.classList.add('btn-primary');
+            activeBtn.classList.remove('btn-ghost');
+        }
+
+        if (State.currentView === 'dashboard') App.Dash.render();
+        if (State.currentView === 'tracker') App.Tracker.render();
+        if (State.currentView === 'followUpPage') renderFollowUpPage();
+        if (State.currentView === 'goalsPage') App.Goals.render();
+        if (State.currentView === 'calendarPage') App.Calendar.render();
+        if (State.currentView === 'achievementsPage') App.Achievements.render();
+        if (State.currentView === 'chartsPage') App.Charts.render();
+    }
+
+    function renderFollowUpPage() {
+        const completedListEl = document.getElementById('completedTopicsList');
+        const incompleteListEl = document.getElementById('incompleteTopicsList');
+        if (!completedListEl || !incompleteListEl) return;
+
+        const allTopics = State.subjects.flatMap(s => s.topics.map(t => ({...t, subjectName: s.name})));
+        
+        const completed = allTopics.filter(t => t.status === 'Completed');
+        const incomplete = allTopics.filter(t => t.status !== 'Completed');
+
+        completed.sort((a, b) => new Date(b.lastReviewed || 0) - new Date(a.lastReviewed || 0));
+        incomplete.sort((a, b) => (a.name > b.name) ? 1 : -1);
+
+        completedListEl.innerHTML = completed.length ? completed.map(t => `
+            <div class="border-b dark:border-gray-700 pb-2">
+                <p class="font-bold">${t.name} <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(${t.subjectName})</span></p>
+                <p class="text-xs text-gray-600 dark:text-gray-300">أُكمل منذ: ${t.completedAt ? U.humanize(Date.now() - new Date(t.completedAt).getTime()) : 'غير محدد'}</p>
+                <p class="text-xs text-gray-600 dark:text-gray-300">آخر مراجعة: ${t.lastReviewed ? `${new Date(t.lastReviewed).toLocaleString('ar-EG')} (منذ ${U.humanize(Date.now() - new Date(t.lastReviewed).getTime())})` : 'لم تراجع بعد'}</p>
+            </div>
+        `).join('') : '<p class="text-gray-500">لا توجد مواضيع مكتملة بعد.</p>';
+
+        incompleteListEl.innerHTML = incomplete.length ? incomplete.map(t => `
+            <div class="border-b dark:border-gray-700 pb-2">
+                <p class="font-bold">${t.name} <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(${t.subjectName})</span></p>
+                <p class="text-xs">${U.statusBadge(t.status)}</p>
+            </div>
+        `).join('') : '<p class="text-gray-500">رائع! كل المواضيع مكتملة.</p>';
+    }
+
+    function toggleSettingsModal(show) {
+        const modal = document.getElementById('settingsModal');
+        if (!modal) return;
+        if (show) {
+            document.getElementById('staleDaysInput').value = State.settings.staleDays || 120;
+            document.getElementById('dueGraceDaysInput').value = State.settings.dueGraceDays || 120;
+            modal.style.display = 'block';
+        } else {
+            modal.style.display = 'none';
+        }
+    }
+
+    function saveSettings() {
+        const staleDays = parseInt(document.getElementById('staleDaysInput').value, 10);
+        const dueGraceDays = parseInt(document.getElementById('dueGraceDaysInput').value, 10);
+
+        if (!isNaN(staleDays) && staleDays > 0) {
+            State.settings.staleDays = staleDays;
+        } else {
+            U.toast('الرجاء إدخال عدد أيام صحيح لتنبيه الإهمال.');
+            return;
+        }
+        
+        if (!isNaN(dueGraceDays) && dueGraceDays >= 0) {
+            State.settings.dueGraceDays = dueGraceDays;
+        } else {
+            U.toast('الرجاء إدخال عدد أيام صحيح لفترة السماح.');
+            return;
+        }
+
+        SAVE.settings();
+        toggleSettingsModal(false);
+        App.Tracker.render();
+        U.toast('تم حفظ الإعدادات.');
+    }
+
+    function bind() {
+        document.getElementById('viewTrackerBtn').onclick = () => switchView('tracker');
+        document.getElementById('viewChartsBtn').onclick = () => switchView('chartsPage');
+        document.getElementById('viewGoalsBtn').onclick = () => switchView('goalsPage');
+        document.getElementById('viewAchievementsBtn').onclick = () => switchView('achievementsPage');
+        document.getElementById('viewCalendarBtn').onclick = () => switchView('calendarPage');
+        document.getElementById('viewDashboardBtn').onclick = () => switchView('dashboard');
+        document.getElementById('viewFollowUpBtn').onclick = () => switchView('followUpPage');
+        document.getElementById('settingsBtn').onclick = () => toggleSettingsModal(true);
+        document.getElementById('settingsCancel').onclick = () => toggleSettingsModal(false);
+        document.getElementById('settingsSave').onclick = saveSettings;
+    }
+
+    return { render, bind, switchView };
+  })();
+
+  // ===== Global Search Module =====
+  App.GlobalSearch = App.GlobalSearch || (function() {
+      const inputEl = document.getElementById('globalSearchInput');
+      const resultsEl = document.getElementById('globalSearchResults');
+
+      function performSearch(query) {
+          if (!query || query.length < 2) {
+              resultsEl.innerHTML = '';
+              resultsEl.classList.add('hidden');
+              return;
+          }
+
+          const q = query.toLowerCase();
+          let results = [];
+
+          State.subjects.forEach((subject, sIndex) => {
+              if (subject.name.toLowerCase().includes(q)) {
+                  results.push({ type: 'المادة', name: subject.name, sIndex });
+              }
+              (subject.topics || []).forEach((topic, tIndex) => {
+                  if (topic.name.toLowerCase().includes(q)) {
+                      results.push({ type: 'الموضوع', name: topic.name, subjectName: subject.name, sIndex, tIndex });
+                  }
+                  (topic.subtopics || []).forEach((subtopic, stIndex) => {
+                      if (subtopic.name.toLowerCase().includes(q)) {
+                          results.push({ type: 'موضوع فرعي', name: subtopic.name, topicName: topic.name, subjectName: subject.name, sIndex, tIndex, stIndex });
+                      }
+                  });
+              });
+          });
+
+          renderResults(results);
+      }
+
+      function renderResults(results) {
+          if (results.length === 0) {
+              resultsEl.innerHTML = '<div class="p-2 text-gray-500">لا توجد نتائج.</div>';
+          } else {
+              resultsEl.innerHTML = results.slice(0, 20).map(r => {
+                  let path = '';
+                  if (r.type === 'الموضوع') path = `<span class="text-xs text-gray-400">(${r.subjectName})</span>`;
+                  if (r.type === 'موضوع فرعي') path = `<span class="text-xs text-gray-400">(${r.subjectName} > ${r.topicName})</span>`;
+                  return `<a href="#" data-s-index="${r.sIndex}" data-t-index="${r.tIndex}" class="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <div class="flex justify-between items-center">
+                          <span class="font-semibold">${r.name}</span>
+                          <span class="badge badge-gray">${r.type}</span>
+                      </div>
+                      ${path}
+                  </a>`;
+              }).join('');
+          }
+          resultsEl.classList.remove('hidden');
+      }
+
+      function navigateToResult(e) {
+          e.preventDefault();
+          const target = e.target.closest('a');
+          if (!target) return;
+
+          const sIndex = parseInt(target.dataset.sIndex, 10);
+          const tIndex = target.dataset.tIndex ? parseInt(target.dataset.tIndex, 10) : null;
+          
+          if (isNaN(sIndex)) return;
+
+          App.Views.switchView('tracker');
+          State.subjects[sIndex].collapsed = false;
+          State.subjects[sIndex].search = '';
+          State.subjects[sIndex].statusFilter = 'All';
+          State.subjects[sIndex].tagFilter = '';
+          SAVE.data();
+          App.Tracker.render();
+          
+          setTimeout(() => {
+              let elementToScrollTo;
+              if (tIndex !== null && tIndex >= 0) {
+                  elementToScrollTo = document.querySelector(`.topic-item[data-s-index='${sIndex}'][data-t-index='${tIndex}']`);
+              } else {
+                  elementToScrollTo = document.querySelector(`.subject-item[data-s-index='${sIndex}']`);
+              }
+              
+              if (elementToScrollTo) {
+                  elementToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  elementToScrollTo.style.transition = 'background-color 0.5s';
+                  elementToScrollTo.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                  setTimeout(() => {
+                      elementToScrollTo.style.backgroundColor = '';
+                  }, 2000);
+              }
+          }, 100);
+
+          inputEl.value = '';
+          resultsEl.classList.add('hidden');
+      }
+
+      function bind() {
+          inputEl.addEventListener('input', (e) => performSearch(e.target.value));
+          inputEl.addEventListener('focus', (e) => performSearch(e.target.value));
+          resultsEl.addEventListener('click', navigateToResult);
+          document.addEventListener('click', (e) => {
+              if (!inputEl.contains(e.target) && !resultsEl.contains(e.target)) {
+                  resultsEl.classList.add('hidden');
+              }
+          });
+      }
+
+      return { bind };
+  })();
+
+  // ===== Charts Module =====
+  App.Charts = App.Charts || (function() {
+      let charts = {}; 
+
+      function destroyCharts() {
+          Object.values(charts).forEach(chart => chart.destroy());
+          charts = {};
+      }
+
+      function renderTopicsBySubjectChart() {
+          const ctx = document.getElementById('topicsBySubjectChart')?.getContext('2d');
+          if (!ctx) return;
+          const labels = State.subjects.map(s => s.name);
+          const data = State.subjects.map(s => (s.topics || []).length);
+          const backgroundColors = labels.map((_, i) => `hsl(${(i * 50)}, 70%, 60%)`);
+          charts.topicsBySubject = new Chart(ctx, {
+              type: 'doughnut',
+              data: {
+                  labels: labels,
+                  datasets: [{ data, backgroundColor: backgroundColors }]
+              },
+              options: {
+                  responsive: true, maintainAspectRatio: false,
+                  plugins: { legend: { position: 'top', labels: { color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151' } } }
+              }
+          });
+      }
+
+      function renderStatusDistributionChart() {
+          const ctx = document.getElementById('statusDistributionChart')?.getContext('2d');
+          if (!ctx) return;
+          const allTopics = State.subjects.flatMap(s => s.topics || []);
+          const statusCounts = { 'Completed': 0, 'In Review': 0, 'Not Started': 0 };
+          allTopics.forEach(t => { statusCounts[t.status]++; });
+          charts.statusDistribution = new Chart(ctx, {
+              type: 'pie',
+              data: {
+                  labels: ['مكتمل', 'قيد المراجعة', 'لم يبدأ'],
+                  datasets: [{
+                      data: [statusCounts['Completed'], statusCounts['In Review'], statusCounts['Not Started']],
+                      backgroundColor: ['#22c55e', '#fbbf24', '#9ca3af']
+                  }]
+              },
+              options: {
+                  responsive: true, maintainAspectRatio: false,
+                  plugins: { legend: { position: 'top', labels: { color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151' } } }
+              }
+          });
+      }
+
+      function renderCompletedByDayChart() {
+          const ctx = document.getElementById('completedByDayChart')?.getContext('2d');
+          if (!ctx) return;
+
+          const completionsByDay = {};
+          State.subjects.forEach(subject => {
+              (subject.topics || []).forEach(topic => {
+                  if (topic.status === 'Completed' && topic.completedAt) {
+                      const dayKey = new Date(topic.completedAt).toISOString().slice(0, 10);
+                      completionsByDay[dayKey] = (completionsByDay[dayKey] || 0) + 1;
+                  }
+              });
+          });
+
+          const sortedDays = Object.keys(completionsByDay).sort((a, b) => new Date(a) - new Date(b));
+          
+          const labels = sortedDays;
+          const data = sortedDays.map(day => completionsByDay[day]);
+          const isDark = document.documentElement.classList.contains('dark');
+
+          charts.completedByDay = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: 'المواضيع المكتملة',
+                      data: data,
+                      backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                      borderColor: 'rgba(59, 130, 246, 1)',
+                      borderWidth: 1
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: {
+                      duration: 1200,
+                      easing: 'easeOutCubic',
+                  },
+                  scales: {
+                      y: {
+                          beginAtZero: true,
+                          ticks: {
+                              color: isDark ? '#9ca3af' : '#6b7280',
+                              precision: 0 
+                          },
+                          grid: { color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
+                      },
+                      x: {
+                          ticks: { color: isDark ? '#9ca3af' : '#6b7280' },
+                          grid: { display: false }
+                      }
+                  },
+                  plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                          callbacks: {
+                              title: (context) => new Date(context[0].label).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                          }
+                      }
+                  }
+              }
+          });
+      }
+
+      function render() {
+          if (State.currentView !== 'chartsPage') return;
+          destroyCharts();
+          renderTopicsBySubjectChart();
+          renderStatusDistributionChart();
+          renderCompletedByDayChart();
+      }
+
+      return { render };
+  })();
+
+  // ===== Goals Module =====
+  App.Goals = App.Goals || (function(){
+    function getPeriod(timeframe) {
+        const now = new Date();
+        if (timeframe === 'week') {
+            const firstDay = new Date(now.setDate(now.getDate() - now.getDay()));
+            firstDay.setHours(0, 0, 0, 0);
+            const lastDay = new Date(firstDay);
+            lastDay.setDate(lastDay.getDate() + 6);
+            lastDay.setHours(23, 59, 59, 999);
+            return { start: firstDay, end: lastDay };
+        }
+        if (timeframe === 'month') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            return { start, end };
+        }
+        return { start: null, end: null };
+    }
+
+    function calculateProgress(goal) {
+        const { start, end } = getPeriod(goal.timeframe);
+        if (!start || !end) return 0;
+        
+        let current = 0;
+        const allTopics = State.subjects.flatMap(s => s.topics || []);
+
+        if (goal.type === 'complete') {
+            current = allTopics.filter(t => {
+                if (t.status !== 'Completed' || !t.completedAt) return false;
+                const completedDate = new Date(t.completedAt);
+                return completedDate >= start && completedDate <= end;
+            }).length;
+        } else if (goal.type === 'review') {
+            current = allTopics.filter(t => {
+                if (!t.lastReviewed) return false;
+                const reviewDate = new Date(t.lastReviewed);
+                return reviewDate >= start && reviewDate <= end;
+            }).length;
+        }
+        return current;
+    }
+
+    function addGoal() {
+        const description = document.getElementById('goalDescription').value.trim();
+        const target = parseInt(document.getElementById('goalTarget').value, 10);
+        const type = document.getElementById('goalType').value;
+        const timeframe = document.getElementById('goalTimeframe').value;
+
+        if (!description || isNaN(target) || target < 1) {
+            U.toast('الرجاء إدخال وصف صحيح وهدف رقمي أكبر من صفر.');
+            return;
+        }
+
+        const newGoal = {
+            id: Date.now(),
+            description,
+            target,
+            type,
+            timeframe,
+            createdAt: new Date().toISOString()
+        };
+
+        State.goals.push(newGoal);
+        SAVE.goals();
+        render();
+        App.Achievements.check();
+        
+        document.getElementById('goalDescription').value = '';
+        document.getElementById('goalTarget').value = '10';
+    }
+
+    function deleteGoal(goalId) {
+        U.confirmAction('هل أنت متأكد من حذف هذا الهدف؟', () => {
+            State.goals = State.goals.filter(g => g.id !== goalId);
+            SAVE.goals();
+            render();
+            App.Achievements.check();
+        });
+    }
+
+    function render() {
+        if (State.currentView !== 'goalsPage') return;
+        const container = document.getElementById('goalsContainer');
+        if (!container) return;
+        if (State.goals.length === 0) {
+            container.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 py-8">لا توجد أهداف حالية. أضف هدفًا جديدًا لتبدأ!</div>`;
+            return;
+        }
+        container.innerHTML = State.goals.map(goal => {
+            const current = calculateProgress(goal);
+            const progress = goal.target > 0 ? Math.round((current / goal.target) * 100) : 0;
+            const timeframeText = goal.timeframe === 'week' ? 'الأسبوعي' : 'الشهري';
+            const typeText = goal.type === 'complete' ? 'إكمال' : 'مراجعة';
+            return `
+                <div class="card bg-white dark:bg-gray-800 p-4 rounded">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-bold">${goal.description}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">الهدف ${timeframeText}: ${typeText} ${goal.target} مواضيع</p>
+                        </div>
+                        <button onclick="App.Goals.deleteGoal(${goal.id})" class="btn btn-danger">حذف</button>
+                    </div>
+                    <div class="mt-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">التقدم</span>
+                            <span class="text-sm font-bold">${current} / ${goal.target}</span>
+                        </div>
+                        <div class="progress-wrap w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
+                            <div class="h-5 rounded-full transition-all duration-500 ease-out" style="${U.progressStyle(progress)}"></div>
+                            <div class="progress-text">${progress}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function bind() {
+        document.getElementById('addGoalBtn').onclick = addGoal;
+    }
+
+    return { render, bind, deleteGoal, calculateProgress };
+  })();
+
+  // ===== Calendar Module =====
+  App.Calendar = App.Calendar || (function(){
+    let currentDate = new Date();
+    let dueTopicsByDate = {};
+
+    function changeMonth(offset) {
+        currentDate.setMonth(currentDate.getMonth() + offset);
+        render();
+    }
+
+    function showDayDetails(dateString) {
+        const modal = document.getElementById('calendarDayModal');
+        const titleEl = document.getElementById('modalDayTitle');
+        const contentEl = document.getElementById('modalDayContent');
+        
+        const topics = dueTopicsByDate[dateString] || [];
+        const date = new Date(dateString);
+
+        titleEl.textContent = `المواضيع المستحقة - ${date.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+        
+        if (topics.length > 0) {
+            contentEl.innerHTML = topics.map(topic => `
+                <div class="border-b dark:border-gray-700 pb-2">
+                    <p class="font-bold">${topic.name} <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(${topic.subjectName})</span></p>
+                    <p class="text-xs">${U.statusBadge(topic.status)}</p>
+                </div>
+            `).join('');
+        } else {
+            contentEl.innerHTML = '<p class="text-gray-500">لا توجد مواضيع مستحقة في هذا اليوم.</p>';
+        }
+
+        modal.style.display = 'block';
+    }
+
+    function hideDayDetails() {
+        document.getElementById('calendarDayModal').style.display = 'none';
+    }
+
+    function render() {
+        if (State.currentView !== 'calendarPage') return;
+
+        const monthYearEl = document.getElementById('calendarMonthYear');
+        const gridEl = document.getElementById('calendarGrid');
+
+        monthYearEl.textContent = currentDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+        gridEl.innerHTML = '';
+
+        dueTopicsByDate = {};
+        State.subjects.forEach(subject => {
+            (subject.topics || []).forEach(topic => {
+                const { dueDate } = U.calcDue(topic);
+                if (dueDate) {
+                    const key = U.dayKey(dueDate);
+                    if (!dueTopicsByDate[key]) {
+                        dueTopicsByDate[key] = [];
+                    }
+                    dueTopicsByDate[key].push({ ...topic, subjectName: subject.name });
+                }
+            });
+        });
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        const firstDayOfWeek = firstDayOfMonth.getDay();
+
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            gridEl.insertAdjacentHTML('beforeend', '<div></div>');
+        }
+
+        for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+            const dayDate = new Date(year, month, day);
+            const dateKey = U.dayKey(dayDate);
+            const dueTopics = dueTopicsByDate[dateKey] || [];
+            const isToday = U.dayKey(new Date()) === dateKey;
+            const cell = `
+                <div class="border dark:border-gray-700 p-2 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 ${isToday ? 'today' : ''}" onclick="App.Calendar.showDayDetails('${dateKey}')">
+                    <div class="font-bold">${day}</div>
+                    ${dueTopics.length > 0 ? `<span class="badge badge-amber mt-2">${dueTopics.length}</span>` : ''}
+                </div>
+            `;
+            gridEl.insertAdjacentHTML('beforeend', cell);
+        }
+    }
+
+    function bind() {
+        document.getElementById('prevMonthBtn').onclick = () => changeMonth(-1);
+        document.getElementById('nextMonthBtn').onclick = () => changeMonth(1);
+        document.getElementById('closeCalendarModal').onclick = hideDayDetails;
+    }
+
+    return { render, bind, showDayDetails };
+  })();
+
+  // ===== Dashboard Module =====
+  App.Dash = App.Dash || (function(){
+    const AudioKit = (function(){ let ctx; function ensure(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); return ctx; } function beep(freq=880, dur=0.08, type='sine', gain=0.08){ const ac=ensure(); const o=ac.createOscillator(); const g=ac.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);} return { start:()=>beep(880,0.06,'sine',0.09), stop:()=>beep(440,0.06,'sine',0.09), done:()=>beep(1200,0.18,'triangle',0.12), tick:()=>beep(700,0.015,'square',0.04) }; })();
+    let pomo = { mode:'idle', remaining:0, timer:null, roundsLeft:0 };
+    let sw   = { running:false, paused:false, startTs:null, accSec:0, interval:null };
+    let cd   = { status:'idle', remaining:0, targetTs:null, interval:null };
+    let rng = { history: [], noRepeatPool: [], lastRange: '' };
+    
+    function logTimeToTopic(selector, timeInSeconds) {
+        const selectedVal = document.querySelector(selector).value;
+        if (!selectedVal) return;
+        const [sIndex, tIndex] = selectedVal.split('-').map(Number);
+        if (isNaN(sIndex) || isNaN(tIndex)) return;
+        
+        const topic = State.subjects[sIndex]?.topics?.[tIndex];
+        if (topic) {
+            topic.timeSpent = (topic.timeSpent || 0) + timeInSeconds;
+            SAVE.data();
+        }
+    }
+
+    function updateTimerButtons(){
+      const pBtn=document.getElementById('pomoToggleBtn'); if(pBtn){ if(pomo.timer){ pBtn.textContent='إيقاف مؤقت'; pBtn.disabled=false; } else if(pomo.mode!=='idle' && pomo.remaining>0){ pBtn.textContent='استئناف'; pBtn.disabled=false; } else{ pBtn.textContent='إيقاف مؤقت'; pBtn.disabled=true; } }
+      const swBtn=document.getElementById('swToggleBtn'); if(swBtn){ if(sw.running){ swBtn.textContent='إيقاف مؤقت'; swBtn.disabled=false; } else if(sw.paused){ swBtn.textContent='استئناف'; swBtn.disabled=false; } else{ swBtn.textContent='إيقاف مؤقت'; swBtn.disabled=true; } }
+      const cdBtn=document.getElementById('cdToggleBtn'); if(cdBtn){ if(cd.status==='running'){ cdBtn.textContent='إيقاف مؤقت'; cdBtn.disabled=false; } else if(cd.status==='paused'){ cdBtn.textContent='استئناف'; cdBtn.disabled=false; } else{ cdBtn.textContent='إيقاف مؤقت'; cdBtn.disabled=true; } }
+    }
+    function pomoStart(){ clearInterval(pomo.timer); const work=Math.max(1, parseInt(document.getElementById('pomoWork').value)||25); const brk=Math.max(1, parseInt(document.getElementById('pomoBreak').value)||5); const rounds=Math.max(1, parseInt(document.getElementById('pomoRounds').value)||4); pomo.roundsLeft=rounds; startPhase('work', work*60, brk*60); updateTimerButtons(); }
+    function startPhase(mode, seconds, otherSeconds){ clearInterval(pomo.timer); pomo.mode=mode; pomo.remaining=seconds; const st=document.getElementById('pomoStatus'); st.textContent=(mode==='work'? 'وقت عمل ⏳: ':'استراحة ☕: ')+U.formatHMS(pomo.remaining); AudioKit.start(); pomo.timer=setInterval(()=>{ pomo.remaining--; st.textContent=(mode==='work'? 'وقت عمل ⏳: ':'استراحة ☕: ')+U.formatHMS(Math.max(0,pomo.remaining)); if(pomo.remaining<=0){ clearInterval(pomo.timer); AudioKit.done(); if(mode==='work'){ const workDuration = (parseInt(document.getElementById('pomoWork').value)||25)*60; logTimeToTopic('#pomoTopicLink', workDuration); pomo.roundsLeft--; if(pomo.roundsLeft<=0){ st.textContent='انتهت الجولات ✅'; pomo.mode='idle'; pomo.remaining=0; updateTimerButtons(); return; } startPhase('break', Math.max(60, otherSeconds), workDuration); } else { startPhase('work', Math.max(60, otherSeconds), (parseInt(document.getElementById('pomoBreak').value)||5)*60); } } },1000); updateTimerButtons(); }
+    function pomoPause(){ if(pomo.timer){ clearInterval(pomo.timer); pomo.timer=null; AudioKit.stop(); updateTimerButtons(); } }
+    function pomoResume(){ if(!pomo.timer && pomo.mode!=='idle' && pomo.remaining>0){ const other=(pomo.mode==='work'? Math.max(60,(parseInt(document.getElementById('pomoBreak').value)||5)*60) : Math.max(60,(parseInt(document.getElementById('pomoWork').value)||25)*60)); startPhase(pomo.mode, pomo.remaining, other); } }
+    function pomoToggle(){ if(pomo.timer) pomoPause(); else pomoResume(); }
+    function pomoReset(){ clearInterval(pomo.timer); pomo.timer=null; pomo.mode='idle'; pomo.remaining=0; pomo.roundsLeft=0; document.getElementById('pomoStatus').textContent='جاهز'; AudioKit.stop(); updateTimerButtons(); }
+    
+    function swStart(){ if(sw.running) return; clearInterval(sw.interval); sw.running=true; sw.paused=false; sw.startTs=Date.now(); AudioKit.start(); sw.interval=setInterval(()=>{ const secs=sw.accSec + Math.floor((Date.now()-sw.startTs)/1000); document.getElementById('swDisplay').textContent=U.formatHMS(secs); },1000); updateTimerButtons(); }
+    function swPause(){ if(!sw.running) return; const elapsed = Math.floor((Date.now()-sw.startTs)/1000); logTimeToTopic('#swTopicLink', elapsed); sw.accSec += elapsed; sw.running=false; sw.paused=true; clearInterval(sw.interval); sw.interval=null; AudioKit.stop(); updateTimerButtons(); }
+    function swResume(){ if(!sw.paused) return; sw.running=true; sw.paused=false; sw.startTs=Date.now(); AudioKit.start(); sw.interval=setInterval(()=>{ const secs=sw.accSec + Math.floor((Date.now()-sw.startTs)/1000); document.getElementById('swDisplay').textContent=U.formatHMS(secs); },1000); updateTimerButtons(); }
+    function swReset(){ clearInterval(sw.interval); sw.interval=null; if(sw.running){ const elapsed = Math.floor((Date.now() - sw.startTs)/1000); logTimeToTopic('#swTopicLink', elapsed); } sw.running=false; sw.paused=false; sw.accSec=0; sw.startTs=null; document.getElementById('swDisplay').textContent='00:00:00'; AudioKit.stop(); updateTimerButtons(); }
+    
+    function cdStart(){ if(cd.status==='running') return; let min=Math.max(0, parseInt(document.getElementById('cdMin').value)||0); let sec=Math.max(0, Math.min(59, parseInt(document.getElementById('cdSec').value)||0)); const total=min*60+sec; if(total<=0){ U.toast('ضع وقت العدّ التنازلي'); return; } cd.remaining=total; cd.targetTs=Date.now()+total*1000; cd.status='running'; AudioKit.start(); clearInterval(cd.interval); document.getElementById('cdDisplay').textContent=U.formatHMS(total); cd.interval=setInterval(()=>{ const remain=Math.max(0, Math.ceil((cd.targetTs - Date.now())/1000)); document.getElementById('cdDisplay').textContent=U.formatHMS(remain); if(remain<=0){ clearInterval(cd.interval); cd.interval=null; cd.status='idle'; cd.remaining=0; AudioKit.done(); updateTimerButtons(); } },1000); updateTimerButtons(); }
+    function cdPause(){ if(cd.status!=='running') return; const nowRemain=Math.max(0, Math.ceil((cd.targetTs - Date.now())/1000)); cd.remaining=nowRemain; cd.status='paused'; clearInterval(cd.interval); cd.interval=null; AudioKit.stop(); updateTimerButtons(); }
+    function cdResume(){ if(cd.status!=='paused' || cd.remaining<=0) return; cd.targetTs=Date.now()+cd.remaining*1000; cd.status='running'; AudioKit.start(); clearInterval(cd.interval); cd.interval=setInterval(()=>{ const remain=Math.max(0, Math.ceil((cd.targetTs - Date.now())/1000)); document.getElementById('cdDisplay').textContent=U.formatHMS(remain); if(remain<=0){ clearInterval(cd.interval); cd.interval=null; cd.status='idle'; cd.remaining=0; AudioKit.done(); updateTimerButtons(); } },1000); updateTimerButtons(); }
+    function cdReset(){ clearInterval(cd.interval); cd.interval=null; cd.status='idle'; cd.remaining=0; cd.targetTs=null; document.getElementById('cdDisplay').textContent='00:00:00'; AudioKit.stop(); updateTimerButtons(); }
+    let wheel = { options:[], rot:0, spinning:false, vel:0, raf:0, tickInt:null };
+    function parseWheelInput(){ const raw=document.getElementById('wheelInput').value||''; return raw.split(/[\n,؛،;]+/).map(s=>s.trim()).filter(Boolean); }
+    function wheelDraw(lines){ wheel.options=lines; const c=document.getElementById('wheelCanvas'); const ctx=c.getContext('2d'); const W=c.width, H=c.height, r=Math.min(W,H)/2-10; ctx.clearRect(0,0,W,H); ctx.save(); ctx.translate(W/2,H/2); ctx.rotate(wheel.rot); const n=Math.max(1, lines.length); for(let i=0;i<n;i++){ const a0=i*2*Math.PI/n, a1=(i+1)*2*Math.PI/n; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,r,a0,a1); ctx.closePath(); ctx.fillStyle = `hsl(${(i*360/n)|0},80%,${(i%2?65:55)}%)`; ctx.fill(); ctx.save(); ctx.rotate(a0+(a1-a0)/2); ctx.fillStyle=document.documentElement.classList.contains('dark')?'#e5e7eb':'#111827'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText(lines[i]||'', r*0.6, 4); ctx.restore(); } ctx.restore(); ctx.beginPath(); ctx.moveTo(W/2, H/2 - (r+6)); ctx.lineTo(W/2-8, H/2-(r-8)); ctx.lineTo(W/2+8, H/2-(r-8)); ctx.closePath(); ctx.fillStyle='#ef4444'; ctx.fill(); }
+    function wheelInit(){ const saved=localStorage.getItem('sp_wheel_opts'); if(saved){ try{ document.getElementById('wheelInput').value = JSON.parse(saved).join('\n'); }catch{} } const input=document.getElementById('wheelInput'); input.addEventListener('input', ()=>{ const lines=parseWheelInput(); localStorage.setItem('sp_wheel_opts', JSON.stringify(lines)); wheelDraw(lines); }); wheelDraw(parseWheelInput()); }
+    function wheelSave(){ const lines=parseWheelInput(); if(lines.length<2){ U.toast('أدخل خيارين على الأقل'); return; } localStorage.setItem('sp_wheel_opts', JSON.stringify(lines)); wheelDraw(lines); }
+    function wheelPickIndex(n){ if(n===0) return 0; const TAU=Math.PI*2; const pointer=-Math.PI/2; let ang = pointer - (wheel.rot % TAU); ang = (ang % TAU + TAU) % TAU; const seg = TAU/n; return Math.floor(ang/seg)%n; }
+    function wheelSpin(){ const lines=parseWheelInput(); if(lines.length<2){ U.toast('أدخل خيارين على الأقل'); return; } if(wheel.spinning) return; wheel.spinning=true; wheel.vel=0.4+Math.random()*0.6; const exclude=document.getElementById('wheelExclude').checked; if(wheel.tickInt) clearInterval(wheel.tickInt); wheel.tickInt=setInterval(()=>AudioKit.tick(),120); function step(){ wheel.rot += wheel.vel; wheel.vel *= 0.985; wheelDraw(lines); if(wheel.vel < 0.005){ wheel.spinning=false; cancelAnimationFrame(wheel.raf); clearInterval(wheel.tickInt); wheel.tickInt=null; const idx=wheelPickIndex(lines.length); const winner=lines[idx]||'—'; document.getElementById('wheelWinner').textContent=winner; AudioKit.done(); if(exclude){ const rest=lines.filter((x,i)=>i!==idx); document.getElementById('wheelInput').value = rest.join('\n'); localStorage.setItem('sp_wheel_opts', JSON.stringify(rest)); wheelDraw(rest); } return; } wheel.raf = requestAnimationFrame(step); } AudioKit.start(); wheel.raf=requestAnimationFrame(step); }
+    
+    function rngGenerate() {
+        const minEl = document.getElementById('rngMin');
+        const maxEl = document.getElementById('rngMax');
+        const resultEl = document.getElementById('rngResult');
+        const historyEl = document.getElementById('rngHistory');
+        const noRepeatEl = document.getElementById('rngNoRepeat');
+
+        const min = parseInt(minEl.value, 10);
+        const max = parseInt(maxEl.value, 10);
+
+        if (isNaN(min) || isNaN(max) || min > max) {
+            resultEl.textContent = 'خطأ في النطاق!';
+            return;
+        }
+
+        let num;
+        if (noRepeatEl.checked) {
+            const currentRange = `${min}-${max}`;
+            if (rng.lastRange !== currentRange) {
+                rng.history = []; 
+                rng.lastRange = currentRange;
+                const pool = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+                rng.noRepeatPool = pool;
+            }
+
+            if (rng.noRepeatPool.length === 0) {
+                resultEl.textContent = 'انتهت الأرقام';
+                return;
+            }
+            num = rng.noRepeatPool.pop();
+            rng.history.push(num);
+        } else {
+            num = Math.floor(Math.random() * (max - min + 1)) + min;
+            rng.history.push(num);
+        }
+
+        resultEl.textContent = num;
+        historyEl.textContent = rng.history.join(', ');
+    }
+
+    function rngReset() {
+        rng.history = [];
+        rng.noRepeatPool = [];
+        rng.lastRange = '';
+        document.getElementById('rngResult').textContent = '—';
+        document.getElementById('rngHistory').textContent = '—';
+    }
+
+    function renderNeglected(){ const el=document.getElementById('neglectedList'); if(!el) return; const items=[]; State.subjects.forEach((s,si)=> (s.topics||[]).forEach((t,ti)=>{ const last=t.lastReviewed? new Date(t.lastReviewed):null; const days= last? Math.floor((Date.now()-last.getTime())/86400000):9999; items.push({name:`${s.name} — ${t.name}`, days, status:t.status||'Not Started'}); })); items.sort((a,b)=> b.days-a.days); el.innerHTML = items.filter(x=>x.days >= (State.settings.staleDays || 120)).slice(0,10).map(x=>`<li>${x.name} <span class="text-gray-500 dark:text-gray-400">(${x.days===9999?'لم يُراجع':x.days+' يوم'})</span> — <span class="badge badge-gray">${x.status}</span></li>`).join('') || '<li>لا يوجد عناصر مهملة 🎉</li>'; }
+
+    function populateTopicSelectors() {
+        const selectors = ['#pomoTopicLink', '#swTopicLink'];
+        selectors.forEach(selector => {
+            const selectEl = document.querySelector(selector);
+            if (!selectEl) return;
+            
+            let optionsHtml = '<option value="">-- اختر موضوعًا --</option>';
+            State.subjects.forEach((subject, sIndex) => {
+                (subject.topics || []).forEach((topic, tIndex) => {
+                    optionsHtml += `<option value="${sIndex}-${tIndex}">${subject.name} - ${topic.name}</option>`;
+                });
+            });
+            selectEl.innerHTML = optionsHtml;
+        });
+    }
+
+    function render(){ 
+        if(State.currentView!=='dashboard') return; 
+        const all=State.subjects.flatMap(s=>s.topics||[]); 
+        const total=all.length, done=all.filter(t=>t.status==='Completed').length; 
+        const pct= total? Math.round((done/total)*100):0; 
+        document.getElementById('dbSubjects').textContent=State.subjects.length; 
+        document.getElementById('dbTopics').textContent=total; 
+        document.getElementById('dbPct').textContent=pct+'%'; 
+        populateTopicSelectors();
+        renderNeglected(); 
+    }
+
+    function bind(){
+      document.getElementById('darkBtn').onclick = U.toggleDark;
+      document.getElementById('btnExport').onclick = ()=>{ const blob=new Blob([JSON.stringify(State.subjects,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='studyProgress.json'; a.click(); };
+      document.getElementById('importInput').onchange = (e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); if(Array.isArray(data)){ State.subjects=data; SAVE.data(); App.Views.render(); } else U.toast('صيغة ملف غير صحيحة'); }catch{ U.toast('ملف غير صالح'); } }; r.readAsText(f); };
+      document.getElementById('pomoStart').onclick=pomoStart; document.getElementById('pomoToggleBtn').onclick=pomoToggle; document.getElementById('pomoReset').onclick=pomoReset;
+      document.getElementById('swStart').onclick=swStart; document.getElementById('swToggleBtn').onclick=()=>{ if(sw.running) swPause(); else if(sw.paused) swResume(); updateTimerButtons(); }; document.getElementById('swReset').onclick=swReset;
+      document.getElementById('cdStart').onclick=cdStart; document.getElementById('cdToggleBtn').onclick=()=>{ if(cd.status==='running') cdPause(); else if(cd.status==='paused') cdResume(); updateTimerButtons(); }; document.getElementById('cdReset').onclick=cdReset;
+      document.getElementById('wheelSave').onclick=wheelSave; document.getElementById('wheelSpin').onclick=wheelSpin; wheelInit();
+      document.getElementById('rngGo').onclick = rngGenerate;
+      document.getElementById('rngReset').onclick = rngReset;
+      document.getElementById('undoBtn').onclick = ()=>{ 
+          const t=State.lastDelete; 
+          if(!t) return; 
+          if(t.type==='subject') {
+              State.subjects.splice(t.sIndex,0,t.data);
+          } else if(t.type==='topic') {
+              State.subjects[t.sIndex].topics.splice(t.tIndex,0,t.data);
+              if (t.wasCompleted) U.updatePoints(10);
+          } else if(t.type==='subtopic') {
+              State.subjects[t.sIndex].topics[t.tIndex].subtopics.splice(t.si,0,t.data);
+          }
+          SAVE.data(); 
+          App.Views.render(); 
+          State.lastDelete=null; 
+          document.getElementById('toast').style.display='none'; 
+          clearTimeout(State.undoTimer); 
+      };
+      document.getElementById('completionDateSave').onclick = App.Tracker.saveCompletionDate;
+      document.getElementById('completionDateCancel').onclick = App.Tracker.hideCompletionDateModal;
+      document.getElementById('reviewDateSave').onclick = App.Tracker.saveReviewDate;
+      document.getElementById('reviewDateCancel').onclick = App.Tracker.hideReviewDateModal;
+    }
+
+    return { render, bind };
+  })();
+
+  // ===== Tracker Module =====
+  App.Tracker = App.Tracker || (function(){
+    const quillToolbarOptions = [
+        [{ 'size': ['12px', '14px', false, '18px', '20px', '24px'] }],
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }]
+    ];
+
+    function updateStats(){ const all=State.subjects.flatMap(s=>s.topics||[]); const total=all.length, done=all.filter(t=>t.status==='Completed').length; const pct= total? Math.round((done/total)*100):0; const statTotal=document.getElementById('statTotal'); if(statTotal){ statTotal.textContent=total; document.getElementById('statDone').textContent=done; document.getElementById('statPct').textContent=pct+'%'; } }
+    function sortTopics(arr, sortBy, dir){ const mul=dir==='desc'?-1:1; const order={'Not Started':0,'In Review':1,'Completed':2}; const copy=arr.slice(); if(sortBy==='manual') return copy.sort((a,b)=>(a.order||0)-(b.order||0)); return copy.sort((a,b)=>{ if(!!b.pinned - !!a.pinned) return (b.pinned?1:-1); if(sortBy==='reviews') return ((a.reviews||0)-(b.reviews||0))*mul; if(sortBy==='status') return ((order[a.status]||0)-(order[b.status]||0))*mul; if(sortBy==='last') return ((new Date(a.lastReviewed||0))-(new Date(b.lastReviewed||0)))*mul; return 0; }); }
+    function filterByStatus(arr, status){ return (!status||status==='All')? arr : arr.filter(t=>t.status===status); }
+    function matchesSearch(topic, q){ if(!q) return true; const s=q.toLowerCase(); const inTopic=(topic.name||'').toLowerCase().includes(s) || (topic.notes||'').toLowerCase().includes(s); const inSubs=(topic.subtopics||[]).some(st => (st.name||'').toLowerCase().includes(s) || (st.notes||'').toLowerCase().includes(s)); return inTopic || inSubs; }
+    function filterByTag(arr, tag) { if (!tag || tag === '') return arr; return arr.filter(t => t.tags && t.tags.includes(tag)); }
+    function addSubject(){ const input=document.getElementById('subjectName'); const name=(input?.value||'').trim(); if(!name) return; State.subjects.push({ name, topics: [], sortBy:'status', sortDir:'asc', statusFilter:'All', search:'', tagFilter:'', collapsed:false }); input.value=''; SAVE.data(); render(); }
+    function deleteSubject(sIndex){ U.confirmAction('هل أنت متأكد من حذف هذه المادة وكل ما فيها؟', () => { const data=State.subjects[sIndex]; State.subjects.splice(sIndex,1); SAVE.data(); render(); State.lastDelete={type:'subject', sIndex, data}; U.toast('تم حذف المادة.'); }); }
+    function addTopic(sIndex){ const input=document.getElementById(`topic-${sIndex}`); const name=(input?.value||'').trim(); if(!name) return; const subj=State.subjects[sIndex]; subj.topics=subj.topics||[]; const orderBase = Math.max(-1, ...subj.topics.map(t=>typeof t.order==='number'?t.order:-1)); subj.topics.push({ name, status:'Not Started', reviews:0, lastReviewed:null, notes:'', subtopics:[], subtopicsVisible: false, notesVisible: false, extrasVisible: false, difficulty:'Medium', pinned:false, tags:[], srLevel:0, completedAt:null, attachments:[], order: orderBase+1, timeSpent: 0, useCustomSR: false, customSRGrowth: '' }); input.value=''; subj.collapsed=false; subj.search=''; subj.statusFilter='All'; subj.tagFilter=''; SAVE.data(); render(); setTimeout(()=>{ const el=document.getElementById(`topic-${sIndex}`); if(el) el.focus(); },0); }
+    function deleteTopic(sIndex, tIndex){ U.confirmAction('هل أنت متأكد من حذف هذا الموضوع؟', () => { const data=State.subjects[sIndex].topics[tIndex]; if (data.status === 'Completed') U.updatePoints(-10); State.subjects[sIndex].topics.splice(tIndex,1); SAVE.data(); render(); State.lastDelete={type:'topic', sIndex, tIndex, data, wasCompleted: data.status === 'Completed'}; U.toast('تم حذف الموضوع.'); }); }
+    function renameTopic(sIndex,tIndex,newName){ if(!newName) return; State.subjects[sIndex].topics[tIndex].name=newName; SAVE.data(); render(); }
+    function changeStatus(sIndex,tIndex,status){ const t=State.subjects[sIndex].topics[tIndex]; const wasCompleted=t.status==='Completed'; t.status=status; const isCompleted = status === 'Completed'; if(isCompleted && !wasCompleted){ t.completedAt=new Date().toISOString(); U.updatePoints(10); } else if (!isCompleted && wasCompleted) { t.completedAt = null; U.updatePoints(-10); } SAVE.data(); render(); }
+    function editReviews(sIndex,tIndex,val){ const t=State.subjects[sIndex].topics[tIndex]; if(t.status!=='Completed'){ U.toast('تعديل المراجعات متاح فقط عندما تكون الحالة Completed.'); render(); return; } const n=Math.max(0, parseInt(val)||0); t.reviews=n; SAVE.data(); App.Achievements.check(); render(); }
+    function setDifficulty(sIndex,tIndex,val){ State.subjects[sIndex].topics[tIndex].difficulty=val; SAVE.data(); render(); }
+    function togglePin(sIndex,tIndex){ const t=State.subjects[sIndex].topics[tIndex]; t.pinned=!t.pinned; SAVE.data(); render(); }
+    function editNotes(sIndex,tIndex,value){ State.subjects[sIndex].topics[tIndex].notes=value; SAVE.data(); App.Achievements.check(); }
+    function reviewTopic(sIndex,tIndex){ const t=State.subjects[sIndex].topics[tIndex]; t.reviews=(t.reviews||0)+1; t.lastReviewed=new Date().toISOString(); t.srLevel=(t.srLevel||0)+1; U.bumpToday(); SAVE.data(); App.Achievements.check(); render(); }
+    function safeReview(sIndex,tIndex){ const t=State.subjects[sIndex].topics[tIndex]; if(t.status!=='Completed'){ U.toast('لا تُحتسب المراجعات إلا بعد وضع الحالة "Completed".'); return; } reviewTopic(sIndex,tIndex); }
+    function setSubjectSearch(sIndex,v){ State.subjects[sIndex].search=v||''; SAVE.data(); render(); }
+    function setSort(sIndex,val){ State.subjects[sIndex].sortBy=val; SAVE.data(); render(); }
+    function toggleSortDir(sIndex){ State.subjects[sIndex].sortDir= State.subjects[sIndex].sortDir==='asc'?'desc':'asc'; SAVE.data(); render(); }
+    function setStatusFilter(sIndex,val){ State.subjects[sIndex].statusFilter=val; SAVE.data(); render(); }
+    function setTagFilter(sIndex,val){ State.subjects[sIndex].tagFilter=val||''; SAVE.data(); render(); }
+    function toggleTopics(sIndex){ State.subjects[sIndex].collapsed=!State.subjects[sIndex].collapsed; SAVE.data(); render(); }
+    function clearFilters(sIndex){ State.subjects[sIndex].search=''; State.subjects[sIndex].statusFilter='All'; State.subjects[sIndex].tagFilter=''; SAVE.data(); render(); }
+    function toggleTag(sIndex,tIndex, name){ const t=State.subjects[sIndex].topics[tIndex]; t.tags=t.tags||[]; const i=t.tags.indexOf(name); if(i>-1) t.tags.splice(i,1); else t.tags.push(name); SAVE.data(); render(); }
+    function addCustomTag(sIndex,tIndex){ const name=(document.getElementById(`newtag-${sIndex}-${tIndex}`)?.value||'').trim(); const color=(document.getElementById(`newtagcolor-${sIndex}-${tIndex}`)?.value||'#64748b'); if(!name) return; State.tagColors[name]=color; const t=State.subjects[sIndex].topics[tIndex]; t.tags=t.tags||[]; if(!t.tags.includes(name)) t.tags.push(name); SAVE.tags(); SAVE.data(); render(); }
+    function addGlobalTag(sIndex){ const name=(document.getElementById(`mgrNewTag-${sIndex}`)?.value||'').trim(); const color=document.getElementById(`mgrNewColor-${sIndex}`)?.value||'#64748b'; if(!name) return; State.tagColors[name]=color; SAVE.tags(); render(); }
+    function deleteGlobalTag(name){ U.confirmAction(`هل أنت متأكد من حذف الوسم "${name}"؟ سيتم إزالته من جميع المواضيع.`, () => { delete State.tagColors[name]; State.subjects.forEach(s => (s.topics||[]).forEach(t => { t.tags = (t.tags||[]).filter(x=>x!==name); })); SAVE.tags(); SAVE.data(); render(); }); }
+    function toggleTagManager(sIndex){ const box=document.getElementById(`tagManager-${sIndex}`); if(!box) return; box.classList.toggle('hidden'); if(!box.dataset.inited){ box.dataset.inited='1'; } const list=document.getElementById(`tagMgrList-${sIndex}`); if(list){ list.innerHTML = Object.keys(State.tagColors).length===0? '<span class="text-xs text-gray-500 dark:text-gray-400">لا توجد وسوم مخصصة بعد.</span>' : Object.entries(State.tagColors).map(([n,c])=>`<span class="tag" style="border:1px solid ${c};color:${c}"><span class="tag-dot" style="background:${c}"></span>${n}<button class="ml-1" title="حذف" onclick="App.Tracker.deleteGlobalTag('${n}')">✕</button></span>`).join(''); } }
+    function addAttachment(ev, sIndex, tIndex){ const file=ev.target.files[0]; if(!file) return; const r=new FileReader(); r.onload=()=>{ const t=State.subjects[sIndex].topics[tIndex]; t.attachments=t.attachments||[]; t.attachments.push({ name:file.name, data:r.result }); SAVE.data(); render(); }; r.readAsDataURL(file); }
+    function removeAttachment(sIndex,tIndex,i){ U.confirmAction('هل أنت متأكد من حذف هذا المرفق؟', () => { const t=State.subjects[sIndex].topics[tIndex]; (t.attachments||[]).splice(i,1); SAVE.data(); render(); }); }
+    function toggleSectionVisibility(sIndex, tIndex, section) { const topic = State.subjects[sIndex].topics[tIndex]; const key = `${section}Visible`; topic[key] = !topic[key]; SAVE.data(); render(); }
+    function renderSubtopics(sIndex,tIndex){ const listEl=document.getElementById(`sublist-${sIndex}-${tIndex}`); if(!listEl) return; const subs=State.subjects[sIndex].topics[tIndex].subtopics||[]; listEl.innerHTML=''; subs.forEach((sub,si)=>{ const row=document.createElement('li'); row.className='subtopic-item border border-gray-200 dark:border-gray-700 rounded p-2 flex items-center gap-2'; row.dataset.si = si; row.innerHTML=` <div class="drag-handle index-bubble cursor-grab" title="اسحب لإعادة الترتيب">≡</div> <div class="flex-1"> <div class="flex justify-between items-center gap-2"> <div class="editable font-medium" contenteditable="true" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" onblur="App.Tracker.renameSubtopic(${sIndex}, ${tIndex}, ${si}, this.textContent.trim())">${sub.name||''}</div> <div class="flex gap-1 items-center"> <button id="btn-subnote-${sIndex}-${tIndex}-${si}" class="btn btn-ghost" onclick="App.Tracker.toggleSubNote(${sIndex}, ${tIndex}, ${si})">ملاحظات</button> <button class="btn btn-danger" onclick="App.Tracker.deleteSubtopic(${sIndex}, ${tIndex}, ${si})">❌</button> </div> </div> <div id="subnote-${sIndex}-${tIndex}-${si}" class="mt-2 hidden"> <div id="sub-editor-${sIndex}-${tIndex}-${si}"></div> </div> </div>`; listEl.appendChild(row); }); }
+    function addSubtopic(sIndex,tIndex){ const input=document.getElementById(`subtopic-${sIndex}-${tIndex}`); const name=(input?.value||'').trim(); if(!name) return; const t=State.subjects[sIndex].topics[tIndex]; t.subtopics=t.subtopics||[]; t.subtopics.push({ name, notes:'' }); input.value=''; t.subtopicsVisible = true; SAVE.data(); render(); }
+    function deleteSubtopic(sIndex,tIndex,si){ U.confirmAction('هل أنت متأكد من حذف هذا الموضوع الفرعي؟', () => { const data=State.subjects[sIndex].topics[tIndex].subtopics[si]; State.subjects[sIndex].topics[tIndex].subtopics.splice(si,1); SAVE.data(); render(); State.lastDelete={type:'subtopic', sIndex, tIndex, si, data}; U.toast('تم حذف الموضوع الفرعي.'); }); }
+    function editSubNote(sIndex,tIndex,si,value){ State.subjects[sIndex].topics[tIndex].subtopics[si].notes=value; SAVE.data(); }
+    function renameSubtopic(sIndex,tIndex,si,newName){ if(!newName) return; State.subjects[sIndex].topics[tIndex].subtopics[si].name=newName; SAVE.data(); render(); }
+    function toggleSubNote(sIndex, tIndex, si) {
+        const noteContainer = document.getElementById(`subnote-${sIndex}-${tIndex}-${si}`);
+        const btn = document.getElementById(`btn-subnote-${sIndex}-${tIndex}-${si}`);
+        if (!noteContainer || !btn) return;
+
+        const isHidden = noteContainer.classList.toggle('hidden');
+        btn.classList.toggle('btn-ghost', isHidden);
+        btn.classList.toggle('btn-primary', !isHidden);
+
+        const editorId = `sub-editor-${sIndex}-${tIndex}-${si}`;
+        if (!isHidden && !State.editors[editorId]) {
+            const subtopic = State.subjects[sIndex].topics[tIndex].subtopics[si];
+            const quill = new Quill(`#${editorId}`, {
+                modules: { toolbar: quillToolbarOptions },
+                placeholder: 'ملاحظات الموضوع الفرعي...',
+                theme: 'snow'
+            });
+            quill.root.innerHTML = subtopic.notes || '';
+            quill.on('text-change', () => {
+                editSubNote(sIndex, tIndex, si, quill.root.innerHTML);
+            });
+            State.editors[editorId] = quill;
+        }
+    }
+    function toggleCustomSR(sIndex, tIndex, isChecked) {
+        const topic = State.subjects[sIndex].topics[tIndex];
+        topic.useCustomSR = isChecked;
+        SAVE.data();
+        render();
+    }
+    function setCustomSR(sIndex, tIndex, value) {
+        const topic = State.subjects[sIndex].topics[tIndex];
+        topic.customSRGrowth = value;
+        SAVE.data();
+        render();
+    }
+    function setupSubjectDnD(){ const container=document.getElementById('subjectsContainer'); const sections=[...container.querySelectorAll('section.subject-item')]; sections.forEach(sec=>{ const handle=sec.querySelector('.drag-handle'); if(!handle) return; handle.draggable=true; handle.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', sec.dataset.sIndex); sec.classList.add('dim'); }); handle.addEventListener('dragend', ()=>sec.classList.remove('dim')); sec.addEventListener('dragover', e=>{ e.preventDefault(); }); sec.addEventListener('drop', e=>{ e.preventDefault(); const from=parseInt(e.dataTransfer.getData('text/plain')); const to=parseInt(sec.dataset.sIndex); if(isNaN(from)||isNaN(to)||from===to) return; const [moved]=State.subjects.splice(from,1); State.subjects.splice(to,0,moved); SAVE.data(); render(); }); }); }
+    function setupTopicDnD(sIndex) { const container = document.getElementById(`topics-${sIndex}`); if (!container || State.subjects[sIndex].sortBy !== 'manual') return; container.querySelectorAll('li.topic-item').forEach(item => { const handle = item.querySelector('.drag-handle:not(.disabled)'); if (!handle) return; item.draggable = true; item.addEventListener('dragstart', e => { e.stopPropagation(); e.dataTransfer.setData('text/plain', item.dataset.tIndex); setTimeout(() => item.classList.add('dim'), 0); }); item.addEventListener('dragend', () => { item.classList.remove('dim'); }); item.addEventListener('dragover', e => { e.preventDefault(); }); item.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); const fromTIndex = parseInt(e.dataTransfer.getData('text/plain'), 10); const toTIndex = parseInt(item.dataset.tIndex, 10); const topics = State.subjects[sIndex].topics; if (isNaN(fromTIndex) || isNaN(toTIndex) || fromTIndex === toTIndex) { return; } const [movedItem] = topics.splice(fromTIndex, 1); topics.splice(toTIndex, 0, movedItem); topics.forEach((topic, index) => { topic.order = index; }); SAVE.data(); render(); }); }); }
+    function setupSubtopicDnD(sIndex, tIndex) { const container = document.getElementById(`sublist-${sIndex}-${tIndex}`); if (!container) return; container.querySelectorAll('li.subtopic-item').forEach(item => { item.draggable = true; item.addEventListener('dragstart', e => { e.stopPropagation(); e.dataTransfer.setData('text/plain', JSON.stringify({ sIndex, tIndex, fromIndex: item.dataset.si })); setTimeout(() => item.classList.add('dim'), 0); }); item.addEventListener('dragend', () => { item.classList.remove('dim'); }); item.addEventListener('dragover', e => { e.preventDefault(); }); item.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.dim').forEach(el => el.classList.remove('dim')); const dataStr = e.dataTransfer.getData('text/plain'); if (!dataStr) return; try { const data = JSON.parse(dataStr); const fromSIndex = data.sIndex; const fromTIndex = data.tIndex; const fromIndex = parseInt(data.fromIndex, 10); const toIndex = parseInt(item.dataset.si, 10); if (fromSIndex !== sIndex || fromTIndex !== tIndex || isNaN(fromIndex) || isNaN(toIndex) || fromIndex === toIndex) { return; } const subtopics = State.subjects[sIndex].topics[tIndex].subtopics; const [moved] = subtopics.splice(fromIndex, 1); subtopics.splice(toIndex, 0, moved); SAVE.data(); render(); } catch(e) { console.error("Subtopic drop failed", e); render(); } }); }); }
+    
+    function hideCompletionDateModal() {
+        const modal = document.getElementById('editCompletionDateModal');
+        modal.style.display = 'none';
+    }
+
+    function promptEditCompletionDate(sIndex, tIndex) {
+        const topic = State.subjects[sIndex].topics[tIndex];
+        if (!topic || topic.status !== 'Completed') return;
+
+        const modal = document.getElementById('editCompletionDateModal');
+        const input = document.getElementById('completionDateInput');
+        
+        const date = new Date(topic.completedAt);
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        input.value = date.toISOString().slice(0, 16);
+
+        modal.dataset.sIndex = sIndex;
+        modal.dataset.tIndex = tIndex;
+        modal.style.display = 'block';
+    }
+
+    function saveCompletionDate() {
+        U.confirmAction('هل أنت متأكد من تغيير وقت الإكمال؟', () => {
+            const modal = document.getElementById('editCompletionDateModal');
+            const input = document.getElementById('completionDateInput');
+            const sIndex = modal.dataset.sIndex;
+            const tIndex = modal.dataset.tIndex;
+
+            if (sIndex === undefined || tIndex === undefined) return;
+
+            const newDate = new Date(input.value);
+            if (isNaN(newDate.getTime())) {
+                U.toast('التاريخ المدخل غير صحيح.');
+                return;
+            }
+
+            State.subjects[sIndex].topics[tIndex].completedAt = newDate.toISOString();
+            SAVE.data();
+            hideCompletionDateModal();
+            render(); 
+            U.toast('تم تحديث وقت الإكمال بنجاح.');
+        });
+    }
+
+    function hideReviewDateModal() {
+        const modal = document.getElementById('editReviewDateModal');
+        modal.style.display = 'none';
+    }
+
+    function promptEditReviewDate(sIndex, tIndex) {
+        const topic = State.subjects[sIndex].topics[tIndex];
+        if (!topic) return;
+
+        const modal = document.getElementById('editReviewDateModal');
+        const input = document.getElementById('reviewDateInput');
+        
+        const date = topic.lastReviewed ? new Date(topic.lastReviewed) : new Date();
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        input.value = date.toISOString().slice(0, 16);
+
+        modal.dataset.sIndex = sIndex;
+        modal.dataset.tIndex = tIndex;
+        modal.style.display = 'block';
+    }
+
+    function saveReviewDate() {
+        U.confirmAction('هل أنت متأكد من تغيير تاريخ آخر مراجعة؟', () => {
+            const modal = document.getElementById('editReviewDateModal');
+            const input = document.getElementById('reviewDateInput');
+            const sIndex = modal.dataset.sIndex;
+            const tIndex = modal.dataset.tIndex;
+
+            if (sIndex === undefined || tIndex === undefined) return;
+
+            const newDate = new Date(input.value);
+            if (isNaN(newDate.getTime())) {
+                U.toast('التاريخ المدخل غير صحيح.');
+                return;
+            }
+
+            State.subjects[sIndex].topics[tIndex].lastReviewed = newDate.toISOString();
+            SAVE.data();
+            hideReviewDateModal();
+            render(); 
+            U.toast('تم تحديث تاريخ آخر مراجعة.');
+        });
+    }
+
+    function render(){ 
+      U.applyDark(); 
+      updateStats(); 
+      if(State.currentView!=='tracker') return; 
+      
+      const container=document.getElementById('subjectsContainer'); container.innerHTML='';
+      State.editors = {}; // Clear old editor instances
+      State.subjects.forEach((subject,sIndex)=>{
+        subject.topics=subject.topics||[]; subject.sortBy=subject.sortBy||'status'; subject.sortDir=subject.sortDir||'asc'; subject.statusFilter=subject.statusFilter||'All'; subject.search=subject.search||''; subject.tagFilter=subject.tagFilter||''; subject.collapsed=!!subject.collapsed;
+        const total=subject.topics.length; const completed=subject.topics.filter(t=>t.status==='Completed').length; const progress= total? Math.round((completed/total)*100):0;
+        
+        let list = subject.topics.filter(t=>matchesSearch(t, subject.search)); 
+        list = (!subject.collapsed)? filterByStatus(list, subject.statusFilter):list; 
+        list = (!subject.collapsed && subject.tagFilter)? filterByTag(list, subject.tagFilter):list;
+        list = sortTopics(list, subject.sortBy, subject.sortDir);
+
+        const dynamicTags=new Set(['حفظ','مسائل','عملي','محاضرة','أخرى', ...Object.keys(State.tagColors||{}), ...subject.topics.flatMap(t=>t.tags||[])]);
+        const tagOptionsHtml=['<option value="">كل الوسوم</option>', ...[...dynamicTags].map(t=>`<option ${subject.tagFilter===t?'selected':''}>${t}</option>`)].join('');
+        const sec=document.createElement('section'); sec.className='card bg-white dark:bg-gray-800 p-4 rounded mb-4 subject-item'; sec.dataset.sIndex=sIndex;
+        sec.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <div class="drag-handle index-bubble" title="اسحب لإعادة ترتيب المواد">≡</div>
+              <h2 class="text-lg md:text-xl font-bold">${subject.name}</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="App.Tracker.toggleTopics(${sIndex})" class="btn btn-ghost">${subject.collapsed?'إظهار':'إخفاء'}</button>
+              <button onclick="App.Tracker.deleteSubject(${sIndex})" class="btn btn-danger">حذف</button>
+            </div>
+          </div>
+          <div class="progress-wrap w-full bg-gray-200 dark:bg-gray-700 rounded-full h-5 mb-2 overflow-hidden">
+            <div class="h-5 rounded-full transition-all duration-500 ease-out" style="${U.progressStyle(progress)}"></div>
+            <div class="progress-text">${progress}%</div>
+          </div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 mb-3">إجمالي: ${total} • مكتمل: ${completed}</div>
+          <div class="${subject.collapsed?'hidden':''}">
+            <div class="flex flex-wrap gap-2 mb-3">
+              <input type="search" placeholder="بحث في هذه المادة..." value="${subject.search||''}" onchange="App.Tracker.setSubjectSearch(${sIndex}, this.value)" class="subject-search border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded flex-1 min-w-[160px]">
+              <select onchange="App.Tracker.setSort(${sIndex}, this.value)" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">
+                <option value="status" ${subject.sortBy==='status'?'selected':''}>فرز: الحالة</option>
+                <option value="reviews" ${subject.sortBy==='reviews'?'selected':''}>فرز: المراجعات</option>
+                <option value="last" ${subject.sortBy==='last'?'selected':''}>فرز: آخر مراجعة</option>
+                <option value="manual" ${subject.sortBy==='manual'?'selected':''}>فرز: ترتيب يدوي</option>
+              </select>
+              <button class="border dark:border-gray-700 bg-white dark:bg-gray-900 rounded px-2" title="اتجاه" onclick="App.Tracker.toggleSortDir(${sIndex})">${subject.sortDir==='asc'?'↑':'↓'}</button>
+              <select id="tagFilter-${sIndex}" onchange="App.Tracker.setTagFilter(${sIndex}, this.value)" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">${tagOptionsHtml}</select>
+              <select onchange="App.Tracker.setStatusFilter(${sIndex}, this.value)" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">
+                <option value="All">All</option>
+                <option ${subject.statusFilter==='Not Started'?'selected':''}>Not Started</option>
+                <option ${subject.statusFilter==='In Review'?'selected':''}>In Review</option>
+                <option ${subject.statusFilter==='Completed'?'selected':''}>Completed</option>
+              </select>
+              <button class="btn btn-ghost" onclick="App.Tracker.clearFilters(${sIndex})">مسح الفلاتر</button>
+              <button class="btn btn-ghost" onclick="App.Tracker.toggleTagManager(${sIndex})">إدارة الوسوم</button>
+            </div>
+            <div id="tagManager-${sIndex}" class="hidden border dark:border-gray-700 rounded p-2 mb-3">
+              <div class="text-sm font-semibold mb-1">الوسوم المخصصة (عالميًا):</div>
+              <div id="tagMgrList-${sIndex}" class="flex flex-wrap gap-2 mb-2"></div>
+              <div class="flex items-center gap-2">
+                <input id="mgrNewTag-${sIndex}" class="border dark:border-gray-700 bg-white dark:bg-gray-900 rounded p-1" placeholder="وسم جديد">
+                <input id="mgrNewColor-${sIndex}" type="color" value="#64748b" class="border rounded w-10 h-8 p-0">
+                <button class="btn btn-primary" onclick="App.Tracker.addGlobalTag(${sIndex})">إضافة</button>
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">الحذف يزيل الوسم من جميع المواضيع أيضًا.</div>
+            </div>
+            <div class="flex gap-2 mb-2">
+              <input type="text" id="topic-${sIndex}" placeholder="اسم الموضوع" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded flex-1" onkeydown="if(event.key==='Enter'){App.Tracker.addTopic(${sIndex})}">
+              <button onclick="App.Tracker.addTopic(${sIndex})" class="btn btn-primary w-32">إضافة موضوع</button>
+            </div>
+          </div>
+          <ul id="topics-${sIndex}" class="space-y-3 ${subject.collapsed?'hidden':''}"></ul>
+        `;
+        container.appendChild(sec);
+
+        if(!subject.collapsed){
+          const ul=sec.querySelector(`#topics-${sIndex}`);
+          list.forEach((topic)=>{
+            topic.timeSpent = topic.timeSpent || 0;
+            if(!topic.tags) topic.tags=[]; topic.difficulty=topic.difficulty||'Medium'; topic.srLevel=topic.srLevel||0; topic.order = (typeof topic.order==='number')? topic.order : Date.now(); const tIndex=subject.topics.indexOf(topic); const reviews=topic.reviews||0; if(topic.status==='Completed' && !topic.completedAt){ topic.completedAt=new Date().toISOString(); }
+            const due=U.calcDue(topic);
+            const li=document.createElement('li'); 
+            li.className=`topic-item border border-gray-200 dark:border-gray-700 rounded p-3 ${due.overdue?'overdue':''} ${due.stale?'stale':''}`; 
+            li.dataset.sIndex=sIndex; li.dataset.tIndex=tIndex;
+            
+            const handleClass = subject.sortBy === 'manual' ? '' : 'disabled';
+            const handleTitle = subject.sortBy === 'manual' ? 'اسحب لإعادة الترتيب' : 'تفعيل السحب متاح فقط في ترتيب يدوي';
+            
+            const notesBtnClass = topic.notesVisible ? 'btn-primary' : 'btn-ghost';
+            const notesSectionClass = topic.notesVisible ? '' : 'hidden';
+            const subtopicsBtnClass = topic.subtopicsVisible ? 'btn-primary' : 'btn-ghost';
+            const subtopicsSectionClass = topic.subtopicsVisible ? '' : 'hidden';
+            const extrasBtnClass = topic.extrasVisible ? 'btn-primary' : 'btn-ghost';
+            const extrasSectionClass = topic.extrasVisible ? '' : 'hidden';
+            const editorId = `editor-${sIndex}-${tIndex}`;
+
+            li.innerHTML = `
+              <div class="flex items-start gap-3">
+                <div class="drag-handle index-bubble ${handleClass}" title="${handleTitle}">≡</div>
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-2 justify-between">
+                    <div class="text-base md:text-[17px] font-semibold editable" contenteditable="true" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" onblur="App.Tracker.renameTopic(${sIndex}, ${tIndex}, this.textContent.trim())">${topic.name}</div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      ${U.statusBadge(topic.status)}
+                      <label class="text-xs flex items-center gap-1"><span>🔄</span><input type="number" min="0" value="${reviews}" ${topic.status!=='Completed'?'disabled':''} class="w-16 border dark:border-gray-700 bg-white dark:bg-gray-900 rounded px-1 ${topic.status!=='Completed'?'opacity-50 cursor-not-allowed':''}" onchange="App.Tracker.editReviews(${sIndex},${tIndex}, this.value)"></label>
+                      ${due.stale?'<span class="badge badge-gray" style="background:#fee2e2;color:#991b1b">مهمل</span>':''}
+                      ${due.overdue && due.dueDate? `<span class="badge badge-amber" title="مستحق منذ ${due.dueDate.toLocaleDateString()}">Due</span>`:''}
+                      <span class="text-xs text-gray-500 dark:text-gray-400">
+                        آخر مراجعة: ${topic.lastReviewed ? new Date(topic.lastReviewed).toLocaleString('ar-EG', {dateStyle: 'medium', timeStyle: 'short'}) : 'لم تراجع بعد'}
+                        <button class="align-middle p-1 text-blue-500 hover:text-blue-700" title="تعديل تاريخ آخر مراجعة" onclick="App.Tracker.promptEditReviewDate(${sIndex}, ${tIndex})">✏️</button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <select onchange="App.Tracker.changeStatus(${sIndex}, ${tIndex}, this.value)" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded">
+                      <option ${topic.status==='Not Started'?'selected':''}>Not Started</option>
+                      <option ${topic.status==='In Review'?'selected':''}>In Review</option>
+                      <option ${topic.status==='Completed'?'selected':''}>Completed</option>
+                    </select>
+                    <select onchange="App.Tracker.setDifficulty(${sIndex}, ${tIndex}, this.value)" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-1 rounded" title="الصعوبة تحدد سرعة الاستحقاق">
+                      <option ${topic.difficulty==='Easy'?'selected':''}>Easy</option>
+                      <option ${topic.difficulty==='Medium'?'selected':''}>Medium</option>
+                      <option ${topic.difficulty==='Hard'?'selected':''}>Hard</option>
+                    </select>
+                    <button id="btn-pin-${sIndex}-${tIndex}" class="btn btn-ghost" onclick="App.Tracker.togglePin(${sIndex},${tIndex})">${topic.pinned?'📌 مثبّت':'📍 تثبيت'}</button>
+                    <button id="btn-review-${sIndex}-${tIndex}" onclick="App.Tracker.safeReview(${sIndex}, ${tIndex})" class="btn btn-accent" ${topic.status!=='Completed'?' disabled style="opacity:.6;cursor:not-allowed"':''}>مراجعة +1</button>
+                    <button onclick="App.Tracker.toggleSectionVisibility(${sIndex},${tIndex}, 'notes')" class="btn ${notesBtnClass}">Notes</button>
+                    <button onclick="App.Tracker.toggleSectionVisibility(${sIndex},${tIndex}, 'subtopics')" class="btn ${subtopicsBtnClass}">Subtopics</button>
+                    <button onclick="App.Tracker.toggleSectionVisibility(${sIndex},${tIndex}, 'extras')" class="btn ${extrasBtnClass}">تفاصيل</button>
+                    <button onclick="App.Tracker.deleteTopic(${sIndex}, ${tIndex})" class="btn btn-danger">❌ حذف</button>
+                  </div>
+
+                  ${topic.completedAt ? `
+                  <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      وقت الإكمال: ${new Date(topic.completedAt).toLocaleString('ar-EG', {dateStyle: 'medium', timeStyle: 'short'})}
+                      <button class="align-middle p-1 text-blue-500 hover:text-blue-700" title="تعديل وقت الإكمال" onclick="App.Tracker.promptEditCompletionDate(${sIndex}, ${tIndex})">✏️</button>
+                  </div>` : ''}
+
+                  <div class="mt-2 ${notesSectionClass}">
+                     <div id="${editorId}"></div>
+                  </div>
+
+                  <div class="mt-3 ${subtopicsSectionClass}">
+                    <div class="flex gap-2 mb-2">
+                      <input type="text" id="subtopic-${sIndex}-${tIndex}" placeholder="اسم الـ Subtopic" class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded flex-1" onkeydown="if(event.key==='Enter'){App.Tracker.addSubtopic(${sIndex},${tIndex})}">
+                      <button onclick="App.Tracker.addSubtopic(${sIndex}, ${tIndex})" class="btn btn-green">إضافة</button>
+                    </div>
+                    <ul id="sublist-${sIndex}-${tIndex}" class="space-y-2"></ul>
+                  </div>
+
+                  <div class="mt-3 ${extrasSectionClass}">
+                    <div class="border-t dark:border-gray-700 pt-2 mt-2 space-y-3">
+                        <div>
+                          <h4 class="font-semibold mb-2">إعدادات التكرار المتباعد</h4>
+                          <label class="flex items-center gap-2">
+                            <input type="checkbox" onchange="App.Tracker.toggleCustomSR(${sIndex}, ${tIndex}, this.checked)" ${topic.useCustomSR ? 'checked' : ''}>
+                            <span>استخدام نظام تكرار مخصص</span>
+                          </label>
+                          <div class="mt-2 ${topic.useCustomSR ? '' : 'hidden'}">
+                              <label class="text-sm">سلسلة التكرار (أيام، مفصولة بفاصلة):</label>
+                              <input type="text" placeholder="e.g., 2,5,10,25,60" value="${topic.customSRGrowth || ''}" onchange="App.Tracker.setCustomSR(${sIndex}, ${tIndex}, this.value)" class="w-full mt-1 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded">
+                              <p class="text-xs text-gray-500 mt-1">هذه هي الفترات بالأيام بين كل مراجعة. يتم تجاهل إعداد الصعوبة.</p>
+                          </div>
+                        </div>
+                        <div><span class="font-semibold">إجمالي وقت المذاكرة:</span> <span class="font-mono">${U.formatHMS(topic.timeSpent)}</span></div>
+                        <div class="mt-2">
+                          ${U.renderTags(topic.tags)}
+                          <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <span class="pill">أضف وسم:</span>
+                            ${['حفظ','مسائل','عملي','محاضرة','أخرى'].map(tg=>`<button class="tag tag-btn" onclick="App.Tracker.toggleTag(${sIndex}, ${tIndex}, '${tg}')"><span class="tag-dot" style="background:${U.tagColor(tg)}"></span>${tg}</button>`).join('')}
+                            <input id="newtag-${sIndex}-${tIndex}" class="border dark:border-gray-700 bg-white dark:bg-gray-900 rounded p-1" placeholder="وسم مخصص">
+                            <input id="newtagcolor-${sIndex}-${tIndex}" type="color" value="#64748b" class="border rounded w-10 h-8 p-0">
+                            <button class="btn btn-ghost" onclick="App.Tracker.addCustomTag(${sIndex},${tIndex})">إضافة</button>
+                          </div>
+                        </div>
+                        <div class="mt-3">
+                          <label class="btn btn-ghost cursor-pointer">إرفاق (صورة/PDF)
+                            <input type="file" accept="image/*,application/pdf" class="hidden" onchange="App.Tracker.addAttachment(event, ${sIndex}, ${tIndex})"/>
+                          </label>
+                          <div class="text-xs text-gray-500 dark:text-gray-400">يفضّل ملفات صغيرة حتى ما يكبر التخزين.</div>
+                          <ul class="mt-1">${(topic.attachments||[]).map((a,i)=>`<li class="flex items-center gap-2"><a href="${a.data}" target="_blank" class="underline">${a.name}</a><button class="btn btn-ghost" onclick="App.Tracker.removeAttachment(${sIndex},${tIndex},${i})">حذف</button></li>`).join('')}</ul>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+            ul.appendChild(li);
+
+            if (topic.notesVisible) {
+                const quill = new Quill(`#${editorId}`, {
+                    modules: { toolbar: quillToolbarOptions },
+                    placeholder: 'ملاحظات الموضوع...',
+                    theme: 'snow'
+                });
+                quill.root.innerHTML = topic.notes || '';
+                quill.on('text-change', () => {
+                    editNotes(sIndex, tIndex, quill.root.innerHTML);
+                });
+                State.editors[editorId] = quill;
+            }
+
+            if (topic.subtopicsVisible) {
+                renderSubtopics(sIndex,tIndex);
+                setupSubtopicDnD(sIndex, tIndex);
+            }
+          });
+          setupTopicDnD(sIndex);
+        }
+      });
+      setupSubjectDnD();
+    }
+
+    function bind(){ document.getElementById('addSubjectBtn').onclick=addSubject; document.getElementById('subjectName').addEventListener('keydown', e=>{ if(e.key==='Enter') addSubject(); }); }
+
+    return { render, bind, addSubject, deleteSubject, addTopic, deleteTopic, renameTopic, changeStatus, editReviews, setDifficulty, togglePin, editNotes, reviewTopic, safeReview, setSubjectSearch, setSort, toggleSortDir, setStatusFilter, setTagFilter, toggleTopics, clearFilters, toggleTag, addCustomTag, addGlobalTag, deleteGlobalTag, toggleTagManager, addAttachment, removeAttachment, addSubtopic, deleteSubtopic, editSubNote, renameSubtopic, toggleSubNote, toggleSectionVisibility, renderSubtopics, setupSubjectDnD, setupTopicDnD, toggleCustomSR, setCustomSR, promptEditCompletionDate, saveCompletionDate, hideCompletionDateModal, promptEditReviewDate, saveReviewDate, hideReviewDateModal };
+  })();
+
+  // ===== Bootstrap =====
+  function bootstrap(){
+    U.applyDark();
+    U.renderPoints();
+    App.Views.bind();
+    App.GlobalSearch.bind();
+    App.Goals.bind();
+    App.Calendar.bind();
+    App.Dash.bind();
+    App.Tracker.bind();
+    App.Views.render();
+    App.Achievements.check();
+  }
+  document.addEventListener('DOMContentLoaded', bootstrap);
+})();
+</script>
+</body>
+</html>
