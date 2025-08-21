@@ -1,142 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>متابعة التقدّم الدراسي</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Quill.js CSS -->
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-  <!-- Link to the new external CSS file -->
-  <link rel="stylesheet" href="style.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class'
-    }
-  </script>
-</head>
-
-<body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-100 min-h-screen text-[15px]">
-
-  <!-- (مرحلة 2: إضافة شاشة إدارة الملفات الشخصية) -->
-  <!-- هذه الشاشة ستكون أول ما يراه المستخدم -->
-  <section id="profileManager" class="hidden min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-      <div class="card bg-white dark:bg-gray-800 p-6 rounded-lg text-center">
-        <h1 class="text-2xl font-bold mb-4">📚 اختر ملفك الشخصي</h1>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">اختر ملفًا شخصيًا للمتابعة أو أنشئ واحدًا جديدًا.</p>
-        
-        <!-- قائمة الملفات الشخصية (سيتم ملؤها بـ JS) -->
-        <div id="profilesList" class="space-y-3 mb-6 text-right">
-          <!-- مثال على شكل الملف الشخصي -->
-          <!-- 
-          <div class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <span class="font-semibold">اسم الملف الشخصي</span>
-            <div class="flex gap-2">
-              <button class="btn btn-primary">اختيار</button>
-              <button class="btn btn-danger">حذف</button>
-            </div>
-          </div> 
-          -->
-        </div>
-
-        <!-- قسم إنشاء ملف جديد -->
-        <div>
-          <h2 class="text-lg font-semibold mb-3">أو أنشئ ملفًا جديدًا</h2>
-          <div class="flex gap-2">
-            <input id="newProfileNameInput" type="text" placeholder="أدخل اسم الملف الشخصي..." class="border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded flex-1">
-            <button id="createNewProfileBtn" class="btn btn-green">إنشاء</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- (مرحلة 2: تغليف التطبيق الرئيسي) -->
-  <!-- هذا القسم يحتوي على التطبيق بأكمله وسيكون مخفيًا حتى يتم اختيار ملف شخصي -->
-  <div id="mainApp" class="hidden">
-    <header class="w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2">
-        <h1 class="text-xl font-bold">📚 متابعة التقدّم الدراسي</h1>
-        
-        <!-- (مرحلة 2: إضافة معلومات الملف الشخصي) -->
-        <div id="activeProfileInfo" class="ml-4 border-r border-gray-300 dark:border-gray-700 pr-4 flex items-center gap-2">
-            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">الملف الشخصي:</span>
-            <span id="activeProfileName" class="font-bold"></span>
-            <button id="switchProfileBtn" class="btn btn-ghost text-xs">تبديل</button>
-        </div>
-
-        <div class="ml-auto flex items-center gap-3">
-          <!-- Global Search -->
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input id="globalSearchInput" type="search" placeholder="بحث شامل..." class="w-48 border dark:border-gray-700 bg-white dark:bg-gray-900 p-2 rounded-full pl-9">
-            <div id="globalSearchResults" class="absolute hidden w-80 max-h-96 overflow-y-auto top-full mt-2 right-0 card bg-white dark:bg-gray-800 p-2 rounded shadow-lg text-right"></div>
-          </div>
-          <div id="pointsCounter" class="flex items-center gap-1 font-bold text-amber-500">
-            <span>0</span> <span>نقطة</span> ✨
-          </div>
-          <button id="viewTrackerBtn" class="btn btn-primary">المُتابِع</button>
-          <button id="viewCardsBtn" class="btn btn-ghost">🎴 البطاقات</button>
-          <button id="viewChartsBtn" class="btn btn-ghost">📊 الرسوم البيانية</button>
-          <button id="viewGoalsBtn" class="btn btn-ghost">🏆 الأهداف</button>
-          <button id="viewAchievementsBtn" class="btn btn-ghost">🎖️ الإنجازات</button>
-          <button id="viewCalendarBtn" class="btn btn-ghost">📅 التقويم</button>
-          <button id="viewDashboardBtn" class="btn btn-ghost">لوحة التحكم</button>
-          <button id="viewFollowUpBtn" class="btn btn-ghost">المتابعة</button>
-          <button id="settingsBtn" class="btn btn-ghost">⚙️ الإعدادات</button>
-          <button id="darkBtn" class="btn btn-ghost">🌙</button>
-          <button id="btnExport" class="btn btn-green">تصدير</button>
-          <label class="btn btn-accent cursor-pointer">استيراد
-            <input id="importInput" type="file" accept="application/json" class="hidden" />
-          </label>
-        </div>
-      </div>
-    </header>
-
-    <!-- TRACKER -->
-    <section id="tracker" class="max-w-6xl mx-auto px-4 mt-4"></section>
-
-    <!-- CARDS PAGE -->
-    <section id="cardsPage" class="max-w-7xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- CHARTS PAGE -->
-    <section id="chartsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- GOALS PAGE -->
-    <section id="goalsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- ACHIEVEMENTS PAGE -->
-    <section id="achievementsPage" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- CALENDAR PAGE -->
-    <section id="calendarPage" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-
-    <!-- FOLLOW UP PAGE -->
-    <section id="followUpPage" class="max-w-6xl mx-auto px-4 mt-4 hidden"></section>
-  </div> <!-- End of #mainApp wrapper -->
-
-  <!-- MODALS & TOAST -->
-  <div id="settingsModal" class="modal-backdrop"></div>
-  <div id="editCompletionDateModal" class="modal-backdrop"></div>
-  <div id="editReviewDateModal" class="modal-backdrop"></div>
-  <div id="confirmModal" class="modal-backdrop"></div>
-  <div id="cardsModal" class="modal-backdrop"></div>
-  <div id="calendarDayModal" class="modal-backdrop"></div>
-  <div id="toast" class="card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-4 py-3 flex items-center gap-3"></div>
-
-  <!-- External Libraries -->
-  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Main Application Logic -->
-  <script type="module" src="js/main.js"></script>
-
-</body>
-</html>
